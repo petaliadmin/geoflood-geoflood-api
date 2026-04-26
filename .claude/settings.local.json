@@ -5,7 +5,8 @@
       "Bash(npx tsc *)",
       "Bash(npm ls *)",
       "Bash(npx nest *)",
-      "Bash(npx eslint *)"
+      "Bash(npx eslint *)",
+      "Bash(npx jest *)"
     ]
   }
 }
