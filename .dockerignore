@@ -20,7 +20,6 @@ coverage
 .parcel-cache
 .turbo
 yarn.lock
-package-lock.json
 .prettierignore
 .eslintignore
 .editorconfig
