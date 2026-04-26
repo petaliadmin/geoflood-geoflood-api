@@ -1,0 +1,133 @@
+version: '3.9'
+
+services:
+  # PostgreSQL database with PostGIS extension
+  postgres:
+    image: postgis/postgis:16-3.4
+    container_name: geoflood-postgres
+    environment:
+      POSTGRES_USER: ${DB_USER:-geoflood}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-geoflood_secure_password}
+      POSTGRES_DB: ${DB_NAME:-geoflood_db}
+      POSTGRES_INITDB_ARGS: "-c timezone=UTC"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/01-init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-geoflood} -d ${DB_NAME:-geoflood_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - geoflood-network
+
+  # Redis for caching and queues
+  redis:
+    image: redis:7-alpine
+    container_name: geoflood-redis
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redis_secure_password}
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - geoflood-network
+
+  # Python FastAPI microservice for AI/predictions
+  ai-service:
+    build:
+      context: ./ai-service
+      dockerfile: Dockerfile
+    container_name: geoflood-ai-service
+    environment:
+      - PYTHONUNBUFFERED=1
+      - DB_HOST=postgres
+      - DB_USER=${DB_USER:-geoflood}
+      - DB_PASSWORD=${DB_PASSWORD:-geoflood_secure_password}
+      - DB_NAME=${DB_NAME:-geoflood_db}
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-redis_secure_password}@redis:6379/0
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+    ports:
+      - "8001:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./ai-service:/app
+    networks:
+      - geoflood-network
+    restart: unless-stopped
+
+  # NestJS backend API
+  backend:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    container_name: geoflood-backend
+    environment:
+      - NODE_ENV=${NODE_ENV:-development}
+      - PORT=3000
+      - DATABASE_URL=postgresql://${DB_USER:-geoflood}:${DB_PASSWORD:-geoflood_secure_password}@postgres:5432/${DB_NAME:-geoflood_db}
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-redis_secure_password}@redis:6379
+      - JWT_SECRET=${JWT_SECRET:-your_jwt_secret_key_change_in_production}
+      - JWT_EXPIRATION=${JWT_EXPIRATION:-24h}
+      - REFRESH_TOKEN_SECRET=${REFRESH_TOKEN_SECRET:-your_refresh_token_secret_change_in_production}
+      - REFRESH_TOKEN_EXPIRATION=${REFRESH_TOKEN_EXPIRATION:-7d}
+      - AI_SERVICE_URL=http://ai-service:8000
+      - FIREBASE_PROJECT_ID=${FIREBASE_PROJECT_ID}
+      - FIREBASE_PRIVATE_KEY=${FIREBASE_PRIVATE_KEY}
+      - FIREBASE_CLIENT_EMAIL=${FIREBASE_CLIENT_EMAIL}
+      - WEATHER_API_KEY=${WEATHER_API_KEY}
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./src:/app/src
+      - ./node_modules:/app/node_modules
+    networks:
+      - geoflood-network
+    restart: unless-stopped
+
+  # Nginx reverse proxy and load balancer
+  nginx:
+    image: nginx:alpine
+    container_name: geoflood-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - nginx_cache:/var/cache/nginx
+    depends_on:
+      - backend
+      - ai-service
+    networks:
+      - geoflood-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  nginx_cache:
+    driver: local
+
+networks:
+  geoflood-network:
+    driver: bridge

@@ -1,0 +1,221 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User model
+model User {
+  id                      String   @id @default(uuid())
+  fullName                String
+  email                   String   @unique
+  phone                   String   @unique
+  role                    Role     @default(CITIZEN)
+  passwordHash            String?
+  avatarUrl               String?
+  city                    String   @default("Dakar")
+  locale                  String   @default("fr")
+  pushAlertsEnabled       Boolean  @default(true)
+  locationAlertsEnabled   Boolean  @default(true)
+  themeMode               String   @default("system")
+  otpCode                 String?
+  otpExpiresAt            DateTime?
+  resetToken              String?
+  resetTokenExpiresAt     DateTime?
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  reports                 Report[]
+  terrainChecks           TerrainCheck[]
+  alertReads              AlertRead[]
+  notificationTokens      NotificationToken[]
+
+  @@index([email])
+  @@index([phone])
+}
+
+// Flood Zone model
+model FloodZone {
+  id        String   @id @default(uuid())
+  name      String
+  level     RiskLevel
+  polygon   Json     // GeoJSON
+  centerLat Float
+  centerLng Float
+  city      String
+  score     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  predictions Prediction[]
+
+  @@index([level])
+  @@index([city])
+}
+
+// Alert model
+model Alert {
+  id        String   @id @default(uuid())
+  title     String
+  message   String
+  category  AlertCategory
+  level     RiskLevel
+  area      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  reads     AlertRead[]
+
+  @@index([level])
+  @@index([category])
+}
+
+// Alert read tracking
+model AlertRead {
+  id      String   @id @default(uuid())
+  userId  String
+  alertId String
+  readAt  DateTime?
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  alert   Alert    @relation(fields: [alertId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, alertId])
+}
+
+// Flood Report model
+model Report {
+  id           String       @id @default(uuid())
+  userId       String
+  lat          Float
+  lng          Float
+  waterLevel   WaterLevel
+  roadBlocked  Boolean      @default(false)
+  comment      String?
+  photoPaths   String[]
+  status       ReportStatus @default(PENDING)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+// Terrain Check model
+model TerrainCheck {
+  id                String   @id @default(uuid())
+  userId            String
+  address           String
+  lat               Float
+  lng               Float
+  riskScore         Int
+  altitudeMeters    Float?
+  drainageScore     Int
+  historicalFloods  Int
+  recommendation    String
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+// Weather Snapshot model
+model WeatherSnapshot {
+  id            String           @id @default(uuid())
+  city          String
+  tempC         Float
+  condition     WeatherCondition
+  rainChance    Int
+  humidity      Int
+  windKmh       Float
+  forecastDate  DateTime?
+  createdAt     DateTime         @default(now())
+
+  @@index([city])
+  @@index([createdAt])
+}
+
+// Prediction model
+model Prediction {
+  id                 String   @id @default(uuid())
+  zoneId             String
+  floodProbability   Float
+  severity           RiskLevel
+  confidence         Float
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  zone               FloodZone @relation(fields: [zoneId], references: [id], onDelete: Cascade)
+
+  @@index([zoneId])
+  @@index([createdAt])
+}
+
+// Notification Token model
+model NotificationToken {
+  id        String   @id @default(uuid())
+  userId    String
+  fcmToken  String
+  platform  Platform
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// Enums
+enum Role {
+  CITIZEN
+  AUTHORITY
+  ADMIN
+}
+
+enum RiskLevel {
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum AlertCategory {
+  RAIN
+  FLOOD
+  EVACUATION
+  ROAD_BLOCKED
+  INFO
+}
+
+enum WaterLevel {
+  ANKLE
+  KNEE
+  WAIST
+  ABOVE
+}
+
+enum ReportStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum WeatherCondition {
+  SUNNY
+  CLOUDY
+  RAIN
+  HEAVY_RAIN
+  STORM
+}
+
+enum Platform {
+  ANDROID
+  IOS
+}
