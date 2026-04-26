@@ -45,10 +45,8 @@ export class AuthService {
     return this.generateTokens(savedUser);
   }
 
-  // Login with email and password
-  async login(loginDto: LoginDto) {
-    const { email, password } = loginDto;
-
+  // Validate email + password, return user entity (used by LocalStrategy)
+  async validateCredentials(email: string, password: string): Promise<UserEntity> {
     const user = await this.usersRepository.findOne({
       where: { email },
     });
@@ -63,6 +61,12 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
+    return user;
+  }
+
+  // Login with email and password
+  async login(loginDto: LoginDto) {
+    const user = await this.validateCredentials(loginDto.email, loginDto.password);
     return this.generateTokens(user);
   }
 

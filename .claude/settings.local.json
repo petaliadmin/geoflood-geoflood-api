@@ -3,7 +3,8 @@
     "allow": [
       "Bash(grep -E '\\\\.\\(js|json|yml|yaml|md\\)$')",
       "Bash(npx tsc *)",
-      "Bash(npm ls *)"
+      "Bash(npm ls *)",
+      "Bash(npx nest *)"
     ]
   }
 }

@@ -7,17 +7,21 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   private readonly redis: Redis;
 
   constructor(private configService: ConfigService) {
-    this.redis = new Redis({
-      host: this.configService.get('REDIS_HOST', 'localhost'),
-      port: parseInt(this.configService.get('REDIS_PORT', '6379'), 10),
-      password: this.configService.get('REDIS_PASSWORD'),
-      db: parseInt(this.configService.get('REDIS_DB', '0'), 10),
-    });
+    const redisUrl = this.configService.get<string>('REDIS_URL');
+    this.redis = redisUrl
+      ? new Redis(redisUrl, { lazyConnect: true })
+      : new Redis({
+          host: this.configService.get('REDIS_HOST', 'localhost'),
+          port: parseInt(this.configService.get('REDIS_PORT', '6379'), 10),
+          password: this.configService.get('REDIS_PASSWORD'),
+          db: parseInt(this.configService.get('REDIS_DB', '0'), 10),
+          lazyConnect: true,
+        });
   }
 
   async onModuleInit() {
     await this.redis.connect();
-    console.log('✅ Redis connected');
+    console.log('Redis connected');
   }
 
   async onModuleDestroy() {

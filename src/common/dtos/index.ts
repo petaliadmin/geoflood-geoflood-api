@@ -1,3 +1,16 @@
+import {
+  IsString,
+  IsEmail,
+  IsNotEmpty,
+  MinLength,
+  IsOptional,
+  IsEnum,
+  IsNumber,
+  IsBoolean,
+  IsArray,
+  IsUUID,
+} from 'class-validator';
+
 // Common DTOs for API responses
 export interface ApiResponse<T> {
   success: boolean;
@@ -16,14 +29,28 @@ export interface PaginatedResponse<T> {
 
 // User/Auth DTOs
 export class LoginDto {
+  @IsEmail()
   email: string;
+
+  @IsString()
+  @IsNotEmpty()
   password: string;
 }
 
 export class RegisterDto {
+  @IsString()
+  @IsNotEmpty()
   fullName: string;
+
+  @IsEmail()
   email: string;
+
+  @IsString()
+  @IsNotEmpty()
   phone: string;
+
+  @IsString()
+  @MinLength(6)
   password: string;
 }
 
@@ -108,19 +135,48 @@ export class AlertDto {
 }
 
 export class CreateAlertDto {
+  @IsString()
+  @IsNotEmpty()
   title: string;
+
+  @IsString()
+  @IsNotEmpty()
   message: string;
+
+  @IsEnum(AlertCategory)
   category: AlertCategory;
+
+  @IsEnum(RiskLevel)
   level: RiskLevel;
+
+  @IsString()
+  @IsNotEmpty()
   area: string;
+
+  @IsOptional()
+  @IsUUID()
   targetZoneId?: string;
 }
 
 export class UpdateAlertDto {
+  @IsOptional()
+  @IsString()
   title?: string;
+
+  @IsOptional()
+  @IsString()
   message?: string;
+
+  @IsOptional()
+  @IsEnum(AlertCategory)
   category?: AlertCategory;
+
+  @IsOptional()
+  @IsEnum(RiskLevel)
   level?: RiskLevel;
+
+  @IsOptional()
+  @IsString()
   area?: string;
 }
 

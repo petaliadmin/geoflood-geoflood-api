@@ -51,6 +51,8 @@ services:
       PORT: 3000
       DATABASE_URL: postgresql://geoflood:geoflood_dev@postgres:5432/geoflood
       REDIS_URL: redis://redis:6379
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
       JWT_SECRET: FTDTRDCFF666FTCTCF6CCCV6TF6
       JWT_EXPIRATION: 24h
       CORS_ORIGIN: http://localhost:3000
@@ -75,6 +77,8 @@ services:
       NODE_ENV: development
       DATABASE_URL: postgresql://geoflood:geoflood_dev@postgres:5432/geoflood
       REDIS_URL: redis://redis:6379
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
       JWT_SECRET: FTDTRDCFF666FTCTCF6CCCV6TF6
     volumes:
       - .:/app

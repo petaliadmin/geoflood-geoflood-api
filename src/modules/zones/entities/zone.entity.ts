@@ -15,7 +15,7 @@ import { UserEntity } from '../../users/entities/user.entity';
 @Entity('flood_zones')
 @Index(['level'])
 @Index(['city'])
-@Index(['centerLat', 'centerLng'], { spatial: true })
+@Index(['centerLat', 'centerLng'])
 @Index(['polygon'], { spatial: true })
 export class FloodZoneEntity {
   @PrimaryGeneratedColumn('uuid')

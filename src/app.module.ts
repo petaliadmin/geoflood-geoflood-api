@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { JwtModule } from '@nestjs/jwt';
 import { BullModule } from '@nestjs/bull';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import * as Joi from 'joi';
@@ -61,6 +62,19 @@ import { AppService } from './app.service';
       },
     }),
 
+    // Global JWT (so JwtAuthGuard works in any module)
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        secret: configService.get('JWT_SECRET'),
+        signOptions: {
+          expiresIn: configService.get('JWT_EXPIRATION', '24h'),
+        },
+      }),
+      global: true,
+    }),
+
     // Database
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
@@ -68,8 +82,8 @@ import { AppService } from './app.service';
       useFactory: (configService: ConfigService) => ({
         type: 'postgres',
         url: configService.get('DATABASE_URL'),
-        entities: ['src/**/*.entity.ts'],
-        migrations: ['src/database/migrations/*.ts'],
+        autoLoadEntities: true,
+        migrations: ['dist/database/migrations/*.js'],
         migrationsRun: false,
         synchronize: configService.get('NODE_ENV') === 'development',
         logging: configService.get('NODE_ENV') === 'development',
@@ -86,7 +100,7 @@ import { AppService } from './app.service';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
-        url: configService.get('REDIS_URL'),
+        redis: configService.get('REDIS_URL'),
       }),
     }),
 

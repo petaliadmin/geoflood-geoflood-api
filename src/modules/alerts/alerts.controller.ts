@@ -51,6 +51,8 @@ export class AlertsController {
 
   @Get('unread-count')
   @HttpCode(200)
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('access-token')
   @ApiOperation({ summary: 'Get unread alerts count' })
   async getUnreadCount(@CurrentUser() user: any) {
     const count = await this.alertsService.getUnreadCount(user.id);
@@ -59,6 +61,8 @@ export class AlertsController {
 
   @Get('my-alerts')
   @HttpCode(200)
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('access-token')
   @ApiOperation({ summary: 'Get alerts for current user (unread first)' })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({ name: 'offset', required: false, type: Number })
@@ -121,13 +125,4 @@ export class AlertsController {
     return { success: true, markedRead: result.markedRead };
   }
 
-  @Get('unread-count')
-  @HttpCode(200)
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth('access-token')
-  @ApiOperation({ summary: 'Get unread alerts count' })
-  async getUnreadCountAuthenticated(@CurrentUser() user: any) {
-    const count = await this.alertsService.getUnreadCount(user.id);
-    return { count };
-  }
 }
