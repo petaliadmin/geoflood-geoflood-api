@@ -1,9 +1,4 @@
-import {
-  Controller,
-  Get,
-  Param,
-  Query,
-} from '@nestjs/common';
+import { Controller, Get, Param, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { ZonesService } from './zones.service';
 
@@ -19,7 +14,9 @@ export class ZonesController {
   @ApiQuery({ name: 'lat', required: false })
   @ApiQuery({ name: 'lng', required: false })
   @ApiQuery({ name: 'radius', required: false })
-  async getZones(@Query() query: any) {
+  async getZones(
+    @Query() query: { city?: string; level?: string; lat?: number; lng?: number; radius?: number },
+  ) {
     return this.zonesService.findAll(query);
   }
 
@@ -28,13 +25,13 @@ export class ZonesController {
   @ApiQuery({ name: 'lat', required: true })
   @ApiQuery({ name: 'lng', required: true })
   @ApiQuery({ name: 'radius', required: false })
-  async getNearby(@Query() query: any) {
+  async getNearby(@Query() query: { lat: number; lng: number; radius?: number }) {
     return this.zonesService.getNearby(query.lat, query.lng, query.radius);
   }
 
   @Get('risk-map')
   @ApiOperation({ summary: 'Get zones for risk map visualization' })
-  async getRiskMap(@Query() query: any) {
+  async getRiskMap(@Query() query: { city?: string }) {
     return this.zonesService.getRiskMap(query);
   }
 

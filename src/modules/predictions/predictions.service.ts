@@ -42,10 +42,7 @@ export class PredictionsService {
     return [];
   }
 
-  async getPredictionForLocation(
-    lat: number,
-    lng: number,
-  ): Promise<PredictionDto> {
+  async getPredictionForLocation(lat: number, lng: number): Promise<PredictionDto> {
     const nearestZone = await this.findNearestZone(lat, lng);
     if (!nearestZone) {
       return this.generateMockPrediction('unknown');
@@ -138,7 +135,12 @@ export class PredictionsService {
       id: 'mock-' + Math.random().toString(36).substr(2, 9),
       zoneId,
       floodProbability: Math.random() * 0.5,
-      severity: Math.random() > 0.7 ? RiskLevel.HIGH : Math.random() > 0.4 ? RiskLevel.MEDIUM : RiskLevel.LOW,
+      severity:
+        Math.random() > 0.7
+          ? RiskLevel.HIGH
+          : Math.random() > 0.4
+            ? RiskLevel.MEDIUM
+            : RiskLevel.LOW,
       confidence: Math.random() * 0.3 + 0.7,
       createdAt: new Date(),
     };
@@ -155,4 +157,3 @@ export class PredictionsService {
     };
   }
 }
-

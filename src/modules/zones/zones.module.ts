@@ -5,9 +5,7 @@ import { ZonesController } from './zones.controller';
 import { FloodZoneEntity } from './entities/zone.entity';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([FloodZoneEntity]),
-  ],
+  imports: [TypeOrmModule.forFeature([FloodZoneEntity])],
   providers: [ZonesService],
   controllers: [ZonesController],
   exports: [ZonesService],

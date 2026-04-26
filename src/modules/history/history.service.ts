@@ -65,7 +65,7 @@ export class HistoryService {
       .take(limit)
       .getRawMany();
 
-    return zones.map((z: any) => ({
+    return zones.map((z: { zone_name: string; reportCount: string }) => ({
       zoneName: z.zone_name,
       episodeCount: parseInt(z.reportCount, 10),
     }));

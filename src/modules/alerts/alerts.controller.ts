@@ -15,7 +15,7 @@ import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
 import { RolesGuard } from '@/common/guards/roles.guard';
 import { Roles } from '@/common/decorators/roles.decorator';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
-import { CreateAlertDto } from '@/common/dtos';
+import { CreateAlertDto, AuthUser } from '@/common/dtos';
 
 @ApiTags('Alerts')
 @Controller('v1/alerts')
@@ -27,16 +27,21 @@ export class AlertsController {
   @ApiOperation({ summary: 'Get all alerts with pagination' })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({ name: 'offset', required: false, type: Number })
-  @ApiQuery({ name: 'category', required: false, enum: ['rain', 'flood', 'evacuation', 'roadBlocked', 'info'] })
+  @ApiQuery({
+    name: 'category',
+    required: false,
+    enum: ['rain', 'flood', 'evacuation', 'roadBlocked', 'info'],
+  })
   @ApiQuery({ name: 'level', required: false, enum: ['high', 'medium', 'low'] })
   async getAlerts(
-    @Query() query: {
+    @Query()
+    query: {
       limit?: number;
       offset?: number;
       category?: string;
       level?: string;
     },
-    @CurrentUser() user?: any,
+    @CurrentUser() user?: AuthUser,
   ) {
     const result = await this.alertsService.findAll({
       ...query,
@@ -54,7 +59,7 @@ export class AlertsController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('access-token')
   @ApiOperation({ summary: 'Get unread alerts count' })
-  async getUnreadCount(@CurrentUser() user: any) {
+  async getUnreadCount(@CurrentUser() user: AuthUser) {
     const count = await this.alertsService.getUnreadCount(user.id);
     return { count };
   }
@@ -67,7 +72,7 @@ export class AlertsController {
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({ name: 'offset', required: false, type: Number })
   async getMyAlerts(
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthUser,
     @Query() query: { limit?: number; offset?: number },
   ) {
     return this.alertsService.getAlertsForUser(user.id, query.limit, query.offset);
@@ -86,7 +91,7 @@ export class AlertsController {
   @Roles('admin', 'authority')
   @ApiBearerAuth('access-token')
   @ApiOperation({ summary: 'Create alert (admin/authority only)' })
-  async createAlert(@Body() dto: CreateAlertDto, @CurrentUser() _user: any) {
+  async createAlert(@Body() dto: CreateAlertDto, @CurrentUser() _user: AuthUser) {
     const alert = await this.alertsService.create({
       title: dto.title,
       message: dto.message,
@@ -107,10 +112,7 @@ export class AlertsController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('access-token')
   @ApiOperation({ summary: 'Mark alert as read' })
-  async markAsRead(
-    @Param('id') alertId: string,
-    @CurrentUser() user: any,
-  ) {
+  async markAsRead(@Param('id') alertId: string, @CurrentUser() user: AuthUser) {
     const success = await this.alertsService.markAsRead(user.id, alertId);
     return { success };
   }
@@ -120,9 +122,8 @@ export class AlertsController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('access-token')
   @ApiOperation({ summary: 'Mark all alerts as read' })
-  async markAllAsRead(@CurrentUser() user: any) {
+  async markAllAsRead(@CurrentUser() user: AuthUser) {
     const result = await this.alertsService.markAllAsRead(user.id);
     return { success: true, markedRead: result.markedRead };
   }
-
 }

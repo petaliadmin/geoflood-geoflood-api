@@ -6,10 +6,7 @@ import { PredictionsController } from './predictions.controller';
 import { PredictionEntity } from '../zones/entities/zone.entity';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([PredictionEntity]),
-    HttpModule,
-  ],
+  imports: [TypeOrmModule.forFeature([PredictionEntity]), HttpModule],
   providers: [PredictionsService],
   controllers: [PredictionsController],
   exports: [PredictionsService],

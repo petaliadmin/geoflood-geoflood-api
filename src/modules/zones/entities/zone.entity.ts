@@ -12,6 +12,16 @@ import {
 } from 'typeorm';
 import { UserEntity } from '../../users/entities/user.entity';
 
+interface GeoJsonPolygon {
+  type: 'Polygon';
+  coordinates: number[][][];
+}
+
+interface GeoJsonPoint {
+  type: 'Point';
+  coordinates: [number, number];
+}
+
 @Entity('flood_zones')
 @Index(['level'])
 @Index(['city'])
@@ -28,7 +38,7 @@ export class FloodZoneEntity {
   level: 'high' | 'medium' | 'low';
 
   @Column('geometry', { spatialFeatureType: 'Polygon', srid: 4326 })
-  polygon: any;
+  polygon: GeoJsonPolygon;
 
   @Column('double precision')
   centerLat: number;
@@ -144,7 +154,7 @@ export class ReportEntity {
   lng: number;
 
   @Column('geometry', { spatialFeatureType: 'Point', srid: 4326 })
-  location: any;
+  location: GeoJsonPoint;
 
   @Column('enum', { enum: ['ankle', 'knee', 'waist', 'above'] })
   waterLevel: 'ankle' | 'knee' | 'waist' | 'above';
@@ -193,7 +203,7 @@ export class TerrainCheckEntity {
   lng: number;
 
   @Column('geometry', { spatialFeatureType: 'Point', srid: 4326 })
-  location: any;
+  location: GeoJsonPoint;
 
   @Column('int')
   riskScore: number;

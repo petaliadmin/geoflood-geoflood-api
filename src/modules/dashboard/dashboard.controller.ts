@@ -1,14 +1,9 @@
-import {
-  Controller,
-  Get,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { DashboardService } from './dashboard.service';
 import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
-import { DashboardDataDto } from '@/common/dtos';
+import { DashboardDataDto, AuthUser } from '@/common/dtos';
 
 @ApiTags('Dashboard')
 @Controller('v1/dashboard')
@@ -24,7 +19,7 @@ export class DashboardController {
   @ApiQuery({ name: 'lng', required: false, type: Number })
   async getDashboard(
     @Query() query: { city?: string; lat?: number; lng?: number },
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthUser,
   ): Promise<DashboardDataDto> {
     return this.dashboardService.getDashboardData(user.id, query);
   }

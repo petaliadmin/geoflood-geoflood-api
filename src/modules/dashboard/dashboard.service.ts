@@ -5,7 +5,7 @@ import { UserEntity } from '../users/entities/user.entity';
 import { FloodZoneEntity } from '../zones/entities/zone.entity';
 import { AlertEntity } from '../zones/entities/zone.entity';
 import { WeatherSnapshotEntity } from '../zones/entities/zone.entity';
-import { DashboardDataDto, RiskLevel } from '@/common/dtos';
+import { DashboardDataDto, RiskLevel, WeatherCondition } from '@/common/dtos';
 
 @Injectable()
 export class DashboardService {
@@ -81,7 +81,7 @@ export class DashboardService {
         ? {
             city: weather.city,
             tempC: weather.tempC,
-            condition: weather.condition,
+            condition: weather.condition as unknown as WeatherCondition,
             rainChance: weather.rainChance,
             humidity: weather.humidity,
             windKmh: weather.windKmh,
@@ -157,7 +157,7 @@ export class DashboardService {
     return {
       city,
       tempC: 28,
-      condition: 'cloudy' as any,
+      condition: WeatherCondition.CLOUDY,
       rainChance: 20,
       humidity: 65,
       windKmh: 12,

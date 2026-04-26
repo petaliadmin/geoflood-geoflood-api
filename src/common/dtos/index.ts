@@ -5,11 +5,15 @@ import {
   MinLength,
   IsOptional,
   IsEnum,
-  IsNumber,
-  IsBoolean,
-  IsArray,
   IsUUID,
 } from 'class-validator';
+
+// Authenticated user payload from JWT
+export interface AuthUser {
+  id: string;
+  email: string;
+  role: 'citizen' | 'authority' | 'admin';
+}
 
 // Common DTOs for API responses
 export interface ApiResponse<T> {

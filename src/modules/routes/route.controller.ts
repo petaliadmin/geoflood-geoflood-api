@@ -1,9 +1,4 @@
-import {
-  Controller,
-  Get,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { RouteService } from './route.service';
 import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
@@ -22,12 +17,7 @@ export class RouteController {
   @ApiQuery({ name: 'toLat', required: true, type: Number })
   @ApiQuery({ name: 'toLng', required: true, type: Number })
   async getSafeRoute(
-    @Query() query: {
-      fromLat: number;
-      fromLng: number;
-      toLat: number;
-      toLng: number;
-    },
+    @Query() query: { fromLat: number; fromLng: number; toLat: number; toLng: number },
   ) {
     return this.routeService.calculateSafeRoute(query);
   }

@@ -1,17 +1,9 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Param,
-  Query,
-  Body,
-  UseGuards,
-  HttpCode,
-} from '@nestjs/common';
+import { Controller, Get, Post, Param, Query, Body, UseGuards, HttpCode } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { TerrainService } from './terrain.service';
 import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
+import { AuthUser } from '@/common/dtos';
 
 @ApiTags('Terrain')
 @Controller('v1/terrain')
@@ -24,7 +16,7 @@ export class TerrainController {
   @HttpCode(201)
   @ApiOperation({ summary: 'Perform terrain check' })
   async checkTerrain(
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthUser,
     @Body() body: { address: string; lat: number; lng: number },
   ) {
     return this.terrainService.checkTerrain(user.id, body.address, body.lat, body.lng);
@@ -33,7 +25,7 @@ export class TerrainController {
   @Get('checks')
   @ApiOperation({ summary: 'Get user terrain checks' })
   async getUserChecks(
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthUser,
     @Query() query: { limit?: number; offset?: number },
   ) {
     return this.terrainService.getUserChecks(user.id, query);

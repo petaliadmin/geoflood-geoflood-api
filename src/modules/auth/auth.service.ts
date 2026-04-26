@@ -84,7 +84,12 @@ export class AuthService {
   }
 
   // Validate Google OAuth user
-  async validateGoogleUser(data: { googleId: string; email: string; fullName: string; avatarUrl?: string }) {
+  async validateGoogleUser(data: {
+    googleId: string;
+    email: string;
+    fullName: string;
+    avatarUrl?: string;
+  }) {
     // Check if user exists by email
     let user = await this.usersRepository.findOne({
       where: { email: data.email },
@@ -95,8 +100,8 @@ export class AuthService {
       user = this.usersRepository.create({
         email: data.email,
         fullName: data.fullName,
-        phone: '',  // Google OAuth users may not have phone initially
-        passwordHash: null,  // OAuth users don't have password
+        phone: '', // Google OAuth users may not have phone initially
+        passwordHash: null, // OAuth users don't have password
         avatarUrl: data.avatarUrl,
         role: 'citizen',
       });

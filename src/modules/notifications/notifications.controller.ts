@@ -1,15 +1,9 @@
-import {
-  Controller,
-  Post,
-  Delete,
-  Body,
-  UseGuards,
-  HttpCode,
-} from '@nestjs/common';
+import { Controller, Post, Delete, Body, UseGuards, HttpCode } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { NotificationsService } from './notifications.service';
 import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
+import { AuthUser } from '@/common/dtos';
 
 @ApiTags('Notifications')
 @Controller('v1/notifications')
@@ -22,7 +16,7 @@ export class NotificationsController {
   @HttpCode(200)
   @ApiOperation({ summary: 'Register FCM token for push notifications' })
   async registerToken(
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthUser,
     @Body() body: { fcmToken: string; platform: 'android' | 'ios' },
   ) {
     return this.notificationsService.registerToken({
@@ -35,10 +29,7 @@ export class NotificationsController {
   @Delete('unregister-token')
   @HttpCode(200)
   @ApiOperation({ summary: 'Unregister FCM token' })
-  async unregisterToken(
-    @CurrentUser() user: any,
-    @Body() body: { fcmToken: string },
-  ) {
+  async unregisterToken(@CurrentUser() user: AuthUser, @Body() body: { fcmToken: string }) {
     return this.notificationsService.unregisterToken(user.id, body.fcmToken);
   }
 }

@@ -42,10 +42,7 @@ export class TerrainService {
     return this.formatTerrainResponse(saved);
   }
 
-  async getUserChecks(
-    userId: string,
-    query?: { limit?: number; offset?: number },
-  ) {
+  async getUserChecks(userId: string, query?: { limit?: number; offset?: number }) {
     const limit = query?.limit || 10;
     const offset = query?.offset || 0;
 

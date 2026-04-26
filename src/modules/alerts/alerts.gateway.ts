@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  Logger,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import {
   WebSocketGateway,
   WebSocketServer,
@@ -21,6 +17,16 @@ import { AlertsService } from './alerts.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { AlertCreatedEvent } from './alerts.service';
 
+interface AlertData {
+  id: string;
+  title: string;
+  message: string;
+  category: string;
+  level: string;
+  area: string;
+  createdAt: Date;
+}
+
 interface AuthenticatedSocket extends Socket {
   userId?: string;
   userRole?: string;
@@ -29,15 +35,16 @@ interface AuthenticatedSocket extends Socket {
 
 @WebSocketGateway({
   cors: {
-    origin: process.env.CORS_ORIGIN?.split(',') || ['http://localhost:3000', 'exp://localhost:19000'],
+    origin: process.env.CORS_ORIGIN?.split(',') || [
+      'http://localhost:3000',
+      'exp://localhost:19000',
+    ],
     credentials: true,
   },
   namespace: '/ws/alerts',
 })
 @Injectable()
-export class AlertsGateway
-  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
-{
+export class AlertsGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
 
@@ -61,7 +68,9 @@ export class AlertsGateway
 
   async handleConnection(client: AuthenticatedSocket) {
     try {
-      const token = client.handshake.auth?.token || client.handshake.headers?.authorization?.replace('Bearer ', '');
+      const token =
+        client.handshake.auth?.token ||
+        client.handshake.headers?.authorization?.replace('Bearer ', '');
       if (!token) {
         throw new UnauthorizedException('No token provided');
       }
@@ -195,7 +204,7 @@ export class AlertsGateway
     }
   }
 
-  async broadcastAlertToCity(city: string, alert: any) {
+  async broadcastAlertToCity(city: string, alert: AlertData) {
     const room = `alerts-${city}`;
     const alertWithRead = {
       ...alert,
@@ -205,18 +214,18 @@ export class AlertsGateway
     this.logger.log(`Alert broadcasted to ${room}`);
   }
 
-  async broadcastAlertToZone(zoneId: string, alert: any) {
+  async broadcastAlertToZone(zoneId: string, alert: AlertData) {
     const room = `zone-${zoneId}`;
     this.server.to(room).emit('newAlert', { type: 'newAlert', alert });
     this.logger.log(`Alert broadcasted to ${room}`);
   }
 
-  async broadcastGlobalAlert(alert: any) {
+  async broadcastGlobalAlert(alert: AlertData) {
     this.server.emit('newAlert', { type: 'newAlert', alert: { ...alert, global: true } });
     this.logger.log('Global alert broadcasted');
   }
 
-  async sendAlertToUser(userId: string, alert: any) {
+  async sendAlertToUser(userId: string, alert: AlertData) {
     const sockets = this.userSockets.get(userId);
     if (sockets) {
       sockets.forEach(socketId => {
@@ -226,17 +235,17 @@ export class AlertsGateway
     this.logger.log(`Alert sent to user ${userId}`);
   }
 
-  async broadcastRiskUpdate(zone: any) {
+  async broadcastRiskUpdate(zone: Record<string, unknown>) {
     this.server.emit('riskUpdate', { type: 'riskUpdate', zone });
     this.logger.log(`Risk update broadcasted for zone ${zone.id}`);
   }
 
-  async broadcastWeatherUpdate(weather: any) {
+  async broadcastWeatherUpdate(weather: Record<string, unknown>) {
     this.server.emit('weatherUpdate', { type: 'weatherUpdate', weather });
     this.logger.log('Weather update broadcasted');
   }
 
-  async sendNotification(userId: string, notification: any) {
+  async sendNotification(userId: string, notification: Record<string, unknown>) {
     const sockets = this.userSockets.get(userId);
     if (sockets) {
       sockets.forEach(socketId => {

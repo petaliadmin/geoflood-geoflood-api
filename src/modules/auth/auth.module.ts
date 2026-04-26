@@ -11,10 +11,7 @@ import { UserEntity } from '../users/entities/user.entity';
 import { UsersService } from '../users/users.service';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([UserEntity]),
-    PassportModule,
-  ],
+  imports: [TypeOrmModule.forFeature([UserEntity]), PassportModule],
   controllers: [AuthController],
   providers: [AuthService, UsersService, JwtStrategy, LocalStrategy, GoogleStrategy],
   exports: [AuthService],

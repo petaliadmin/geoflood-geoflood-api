@@ -46,10 +46,7 @@ async function bootstrap() {
     .setTitle('GeoFlood API')
     .setDescription('Intelligent flood prevention system for Africa')
     .setVersion('1.0.0')
-    .addBearerAuth(
-      { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
-      'access-token',
-    )
+    .addBearerAuth({ type: 'http', scheme: 'bearer', bearerFormat: 'JWT' }, 'access-token')
     .addTag('Auth', 'Authentication endpoints')
     .addTag('Users', 'User profile management')
     .addTag('Zones', 'Flood zones and geospatial')

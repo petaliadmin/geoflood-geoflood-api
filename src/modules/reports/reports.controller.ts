@@ -18,6 +18,7 @@ import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
 import { RolesGuard } from '@/common/guards/roles.guard';
 import { Roles } from '@/common/decorators/roles.decorator';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
+import { AuthUser } from '@/common/dtos';
 
 @ApiTags('Reports')
 @Controller('v1/reports')
@@ -26,13 +27,13 @@ export class ReportsController {
 
   @Get()
   @ApiOperation({ summary: 'Get all reports' })
-  async getReports(@Query() query: any) {
+  async getReports(@Query() query: { limit?: number; offset?: number; status?: string }) {
     return this.reportsService.findReports(query);
   }
 
   @Get('nearby')
   @ApiOperation({ summary: 'Get reports nearby' })
-  async getNearby(@Query() query: any) {
+  async getNearby(@Query() query: { lat: number; lng: number; radius?: number }) {
     return this.reportsService.findNearby(query.lat, query.lng, query.radius);
   }
 
@@ -49,8 +50,15 @@ export class ReportsController {
   @UseInterceptors(FilesInterceptor('photos', 3))
   @ApiOperation({ summary: 'Create flood report' })
   async createReport(
-    @CurrentUser() user: any,
-    @Body() reportData: any,
+    @CurrentUser() user: AuthUser,
+    @Body()
+    reportData: {
+      lat: number;
+      lng: number;
+      waterLevel: string;
+      roadBlocked?: boolean;
+      comment?: string;
+    },
     @UploadedFiles() files?: Array<Express.Multer.File>,
   ) {
     // TODO: Upload files to S3/MinIO and get URLs
@@ -64,10 +72,7 @@ export class ReportsController {
   @Roles('admin', 'authority')
   @ApiBearerAuth('access-token')
   @ApiOperation({ summary: 'Update report status (admin only)' })
-  async updateStatus(
-    @Param('id') id: string,
-    @Body() body: { status: 'verified' | 'rejected' },
-  ) {
+  async updateStatus(@Param('id') id: string, @Body() body: { status: 'verified' | 'rejected' }) {
     return this.reportsService.updateStatus(id, body.status);
   }
 }

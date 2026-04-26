@@ -1,16 +1,23 @@
-import {
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { AlertEntity, AlertReadEntity } from '../zones/entities/zone.entity';
 
 // Event payloads
+interface AlertData {
+  id: string;
+  title: string;
+  message: string;
+  category: string;
+  level: string;
+  area: string;
+  createdAt: Date;
+}
+
 export class AlertCreatedEvent {
   constructor(
-    public alert: any,
+    public alert: AlertData,
     public targetZoneId?: string,
     public targetCity?: string,
   ) {}
@@ -187,12 +194,14 @@ export class AlertsService {
     const alerts = await this.findAll({ limit, offset, userId });
 
     // Sort unread first, then by date
-    const sorted = alerts.alerts.sort((a: any, b: any) => {
-      if (a.read === b.read) {
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-      }
-      return a.read ? 1 : -1;
-    });
+    const sorted = alerts.alerts.sort(
+      (a: { read?: boolean; createdAt: Date }, b: { read?: boolean; createdAt: Date }) => {
+        if (a.read === b.read) {
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        }
+        return a.read ? 1 : -1;
+      },
+    );
 
     return { ...alerts, alerts: sorted };
   }

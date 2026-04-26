@@ -10,12 +10,22 @@ export class ReportsService {
     private reportsRepository: Repository<ReportEntity>,
   ) {}
 
-  async createReport(userId: string, reportData: any) {
+  async createReport(
+    userId: string,
+    reportData: {
+      lat: number;
+      lng: number;
+      waterLevel: string;
+      roadBlocked?: boolean;
+      comment?: string;
+      photoPaths?: string[];
+    },
+  ) {
     const report = this.reportsRepository.create({
       userId,
       lat: reportData.lat,
       lng: reportData.lng,
-      waterLevel: reportData.waterLevel,
+      waterLevel: reportData.waterLevel as ReportEntity['waterLevel'],
       roadBlocked: reportData.roadBlocked || false,
       comment: reportData.comment,
       photoPaths: reportData.photoPaths || [],
@@ -30,11 +40,7 @@ export class ReportsService {
     return this.formatReportResponse(saved);
   }
 
-  async findReports(query?: {
-    limit?: number;
-    offset?: number;
-    status?: string;
-  }) {
+  async findReports(query?: { limit?: number; offset?: number; status?: string }) {
     const limit = query?.limit || 10;
     const offset = query?.offset || 0;
 
@@ -51,7 +57,7 @@ export class ReportsService {
       .getManyAndCount();
 
     return {
-      reports: reports.map((r) => this.formatReportResponse(r)),
+      reports: reports.map(r => this.formatReportResponse(r)),
       total,
     };
   }
@@ -75,7 +81,7 @@ export class ReportsService {
       .take(20)
       .getMany();
 
-    return reports.map((r) => this.formatReportResponse(r));
+    return reports.map(r => this.formatReportResponse(r));
   }
 
   async findById(id: string) {

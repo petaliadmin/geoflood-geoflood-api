@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { FloodZoneEntity } from './entities/zone.entity';
-import { FloodZoneDto } from '@/common/dtos';
+import { FloodZoneDto, RiskLevel } from '@/common/dtos';
 
 @Injectable()
 export class ZonesService {
@@ -11,7 +11,13 @@ export class ZonesService {
     private zonesRepository: Repository<FloodZoneEntity>,
   ) {}
 
-  async findAll(query?: { city?: string; level?: string; lat?: number; lng?: number; radius?: number }): Promise<FloodZoneDto[]> {
+  async findAll(query?: {
+    city?: string;
+    level?: string;
+    lat?: number;
+    lng?: number;
+    radius?: number;
+  }): Promise<FloodZoneDto[]> {
     let qb = this.zonesRepository.createQueryBuilder('zone');
 
     if (query?.city) {
@@ -39,7 +45,10 @@ export class ZonesService {
       );
     }
 
-    const zones = await qb.orderBy('zone.level', 'DESC').addOrderBy('zone.createdAt', 'DESC').getMany();
+    const zones = await qb
+      .orderBy('zone.level', 'DESC')
+      .addOrderBy('zone.createdAt', 'DESC')
+      .getMany();
     return zones.map(z => this.formatZoneResponse(z));
   }
 
@@ -67,7 +76,7 @@ export class ZonesService {
     return {
       id: zone.id,
       name: zone.name,
-      level: zone.level as any,
+      level: zone.level as RiskLevel,
       polygon,
       center: { lat: zone.centerLat, lng: zone.centerLng },
       city: zone.city,

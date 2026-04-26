@@ -1,9 +1,21 @@
-import { Controller, Post, Body, HttpCode, UseGuards, Req, Get, UnauthorizedException } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  HttpCode,
+  UseGuards,
+  Req,
+  Get,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { RegisterDto, LoginDto } from '@/common/dtos';
+import { UserEntity } from '../users/entities/user.entity';
+import { Request } from 'express';
 import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
+import { AuthUser } from '@/common/dtos';
 import { RateLimitGuard } from '@/common/guards/rate-limit.guard';
 import { AuthGuard } from '@nestjs/passport';
 
@@ -70,9 +82,7 @@ export class AuthController {
   @UseGuards(RateLimitGuard)
   @ApiOperation({ summary: 'Reset password with token' })
   @ApiResponse({ status: 200, description: 'Password reset successful' })
-  async resetPassword(
-    @Body() body: { resetToken: string; newPassword: string },
-  ) {
+  async resetPassword(@Body() body: { resetToken: string; newPassword: string }) {
     return this.authService.resetPassword(body.resetToken, body.newPassword);
   }
 
@@ -82,7 +92,7 @@ export class AuthController {
   @ApiBearerAuth('access-token')
   @ApiOperation({ summary: 'Logout' })
   @ApiResponse({ status: 200, description: 'Logged out successfully' })
-  async logout(@CurrentUser() user: any) {
+  async logout(@CurrentUser() user: AuthUser) {
     // In stateless JWT, logout is handled client-side (token deletion)
     return { message: 'Logged out successfully', userId: user.id };
   }
@@ -98,7 +108,7 @@ export class AuthController {
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
   @ApiOperation({ summary: 'Google OAuth callback' })
-  async googleAuthCallback(@Req() req: any) {
+  async googleAuthCallback(@Req() req: Request & { user?: UserEntity }) {
     // After successful OAuth, passport sets req.user
     const user = req.user;
     if (!user) {

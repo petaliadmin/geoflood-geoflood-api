@@ -54,7 +54,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     return value ? JSON.parse(value) : null;
   }
 
-  async setJson(key: string, ttl: number, value: any): Promise<'OK'> {
+  async setJson(key: string, ttl: number, value: unknown): Promise<'OK'> {
     return this.setex(key, ttl, JSON.stringify(value));
   }
 }

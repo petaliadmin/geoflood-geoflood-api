@@ -22,7 +22,12 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
   async validate(
     accessToken: string,
     refreshToken: string,
-    profile: any,
+    profile: {
+      id: string;
+      emails: { value: string }[];
+      name: { givenName: string; familyName: string };
+      photos?: { value: string }[];
+    },
     done: VerifyCallback,
   ) {
     try {

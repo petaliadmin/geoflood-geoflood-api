@@ -50,7 +50,7 @@ export class WeatherService {
   async getForecast(city: string = 'Dakar', days: number = 5) {
     const cacheKey = `forecast:${city}:${days}`;
 
-    const cached = await this.redisService.getJson<any[]>(cacheKey);
+    const cached = await this.redisService.getJson<WeatherDto[]>(cacheKey);
     if (cached) {
       return cached;
     }
@@ -88,7 +88,7 @@ export class WeatherService {
     const snapshot = this.weatherRepository.create({
       city: data.city,
       tempC: data.tempC,
-      condition: data.condition as any,
+      condition: data.condition as WeatherSnapshotEntity['condition'],
       rainChance: data.rainChance,
       humidity: data.humidity,
       windKmh: data.windKmh,
@@ -108,7 +108,7 @@ export class WeatherService {
     return {
       city,
       tempC: 28,
-      condition: 'cloudy' as any,
+      condition: WeatherCondition.CLOUDY,
       rainChance: 20,
       humidity: 65,
       windKmh: 12,

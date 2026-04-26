@@ -9,12 +9,7 @@ import { WeatherSnapshotEntity } from '../zones/entities/zone.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([
-      UserEntity,
-      FloodZoneEntity,
-      AlertEntity,
-      WeatherSnapshotEntity,
-    ]),
+    TypeOrmModule.forFeature([UserEntity, FloodZoneEntity, AlertEntity, WeatherSnapshotEntity]),
   ],
   providers: [DashboardService],
   controllers: [DashboardController],

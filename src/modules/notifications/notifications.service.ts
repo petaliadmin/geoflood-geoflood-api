@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  ConflictException,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { NotificationTokenEntity } from '../zones/entities/zone.entity';
@@ -14,11 +10,7 @@ export class NotificationsService {
     private tokenRepository: Repository<NotificationTokenEntity>,
   ) {}
 
-  async registerToken(data: {
-    userId: string;
-    fcmToken: string;
-    platform: 'android' | 'ios';
-  }) {
+  async registerToken(data: { userId: string; fcmToken: string; platform: 'android' | 'ios' }) {
     // Check if token already exists
     const existing = await this.tokenRepository.findOne({
       where: { fcmToken: data.fcmToken },

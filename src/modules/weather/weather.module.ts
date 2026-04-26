@@ -6,10 +6,7 @@ import { WeatherSnapshotEntity } from '../zones/entities/zone.entity';
 import { RedisModule } from '@/common/redis/redis.module';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([WeatherSnapshotEntity]),
-    RedisModule,
-  ],
+  imports: [TypeOrmModule.forFeature([WeatherSnapshotEntity]), RedisModule],
   providers: [WeatherService],
   controllers: [WeatherController],
   exports: [WeatherService],
