@@ -45,7 +45,7 @@ services:
     restart: always
 
   api:
-    image: geoflound/backend:${IMAGE_TAG:-latest}
+    image: ${DOCKERHUB_USERNAME}/backend:${IMAGE_TAG:-latest}
     container_name: geoflood-api
     environment:
       NODE_ENV: ${NODE_ENV:-production}
@@ -70,7 +70,7 @@ services:
     restart: always
 
   worker:
-    image: geoflound/backend:${IMAGE_TAG:-latest}
+    image: ${DOCKERHUB_USERNAME}/backend:${IMAGE_TAG:-latest}
     container_name: geoflood-worker
     environment:
       NODE_ENV: ${NODE_ENV:-production}
@@ -88,7 +88,7 @@ services:
     restart: always
 
   python-engine:
-    image: geoflound/python-engine:${IMAGE_TAG:-latest}
+    image: ${DOCKERHUB_USERNAME}/python-engine:${IMAGE_TAG:-latest}
     container_name: geoflood-python
     environment:
       PYTHONUNBUFFERED: 1

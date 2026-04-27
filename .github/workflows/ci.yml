@@ -97,9 +97,9 @@ jobs:
           file: Dockerfile
           push: true
           tags: |
-            geoflound/backend:latest
-            geoflound/backend:${{ github.sha }}
-          cache-from: type=registry,ref=geoflound/backend:cache
+            ${{ secrets.DOCKERHUB_USERNAME }}/backend:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/backend:${{ github.sha }}
+          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/backend:cache
           cache-to: type=inline
 
       - name: Build and push Python engine image
@@ -108,5 +108,5 @@ jobs:
           context: ./python
           push: true
           tags: |
-            geoflound/python-engine:latest
-            geoflound/python-engine:${{ github.sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/python-engine:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/python-engine:${{ github.sha }}
