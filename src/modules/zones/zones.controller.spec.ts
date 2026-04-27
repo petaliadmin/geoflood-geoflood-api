@@ -5,7 +5,7 @@ const mockZonesService = {
   findAll: jest.fn(),
   findById: jest.fn(),
   getNearby: jest.fn(),
-  getRiskMap: jest.fn(),
+  getRiskMapOptimized: jest.fn(),
 };
 
 describe('ZonesController', () => {
@@ -20,20 +20,21 @@ describe('ZonesController', () => {
     mockZonesService.findAll.mockResolvedValue([]);
     const result = await controller.getZones({});
     expect(mockZonesService.findAll).toHaveBeenCalled();
-    expect(result).toEqual([]);
+    expect(result).toEqual({ zones: [] });
   });
 
   it('should get nearby zones', async () => {
     mockZonesService.getNearby.mockResolvedValue([]);
     const result = await controller.getNearby({ lat: 14.69, lng: -17.44 });
     expect(mockZonesService.getNearby).toHaveBeenCalledWith(14.69, -17.44, undefined);
-    expect(result).toEqual([]);
+    expect(result).toEqual({ zones: [] });
   });
 
   it('should get risk map', async () => {
-    mockZonesService.getRiskMap.mockResolvedValue([]);
+    mockZonesService.getRiskMapOptimized.mockResolvedValue([]);
     const result = await controller.getRiskMap({ city: 'Dakar' });
-    expect(result).toEqual([]);
+    expect(mockZonesService.getRiskMapOptimized).toHaveBeenCalledWith({ city: 'Dakar' });
+    expect(result).toEqual({ zones: [] });
   });
 
   it('should get zone by id', async () => {

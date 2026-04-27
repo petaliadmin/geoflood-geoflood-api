@@ -14,7 +14,8 @@
       "Bash(sort -k2)",
       "Bash(file *)",
       "Bash(find C:\\\\Developement\\\\geoflood\\\\geoflood-backend\\\\Zone_inondable_humide *)",
-      "Bash(python3)"
+      "Bash(python3)",
+      "Bash(npm test *)"
     ]
   }
 }

@@ -95,8 +95,10 @@ jobs:
         with:
           context: .
           file: Dockerfile
-          push: false
-          tags: geoflound/backend:latest
+          push: true
+          tags: |
+            geoflound/backend:latest
+            geoflound/backend:${{ github.sha }}
           cache-from: type=registry,ref=geoflound/backend:cache
           cache-to: type=inline
 
@@ -104,5 +106,7 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           context: ./python
-          push: false
-          tags: geoflound/python-engine:latest
+          push: true
+          tags: |
+            geoflound/python-engine:latest
+            geoflound/python-engine:${{ github.sha }}
