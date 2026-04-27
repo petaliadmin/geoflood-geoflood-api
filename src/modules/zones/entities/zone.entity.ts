@@ -52,6 +52,33 @@ export class FloodZoneEntity {
   @Column('int', { default: 0 })
   score: number;
 
+  @Column('double precision', { nullable: true })
+  altitude: number;
+
+  @Column('double precision', { nullable: true })
+  elevation: number;
+
+  @Column('varchar', { length: 50, nullable: true })
+  nature: string;
+
+  @Column('varchar', { length: 50, nullable: true })
+  zoneType: string;
+
+  @Column('varchar', { length: 50, nullable: true })
+  typeBord: string;
+
+  @Column('varchar', { length: 100, nullable: true })
+  designation: string;
+
+  @Column('double precision', { nullable: true })
+  shapeArea: number;
+
+  @Column('double precision', { nullable: true })
+  shapeLeng: number;
+
+  @Column('varchar', { length: 50, nullable: true, default: 'manual' })
+  source: string;
+
   @CreateDateColumn()
   createdAt: Date;
 

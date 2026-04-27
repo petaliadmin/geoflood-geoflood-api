@@ -3,17 +3,21 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { FloodZoneEntity } from './entities/zone.entity';
 import { FloodZoneDto, RiskLevel } from '@/common/dtos';
+import { RedisService } from '@/common/redis/redis.service';
 
 @Injectable()
 export class ZonesService {
   constructor(
     @InjectRepository(FloodZoneEntity)
     private zonesRepository: Repository<FloodZoneEntity>,
+    private redisService: RedisService,
   ) {}
 
   async findAll(query?: {
     city?: string;
     level?: string;
+    source?: string;
+    nature?: string;
     lat?: number;
     lng?: number;
     radius?: number;
@@ -28,7 +32,14 @@ export class ZonesService {
       qb = qb.andWhere('zone.level = :level', { level: query.level });
     }
 
-    // If lat/lng provided, find nearby zones (within radius km)
+    if (query?.source) {
+      qb = qb.andWhere('zone.source = :source', { source: query.source });
+    }
+
+    if (query?.nature) {
+      qb = qb.andWhere('zone.nature = :nature', { nature: query.nature });
+    }
+
     if (query?.lat && query?.lng) {
       const radius = query.radius || 10;
       qb = qb.andWhere(
@@ -40,7 +51,7 @@ export class ZonesService {
         {
           lat: query.lat,
           lng: query.lng,
-          radiusMeters: radius * 1000, // Convert km to meters
+          radiusMeters: radius * 1000,
         },
       );
     }
@@ -64,12 +75,75 @@ export class ZonesService {
     return this.findAll({ lat, lng, radius });
   }
 
-  async getRiskMap(query?: { city?: string; bounds?: string }): Promise<FloodZoneDto[]> {
-    return this.findAll({ city: query?.city });
+  async getRiskMapOptimized(query?: {
+    city?: string;
+    zoom?: number;
+  }): Promise<FloodZoneDto[]> {
+    const zoom = query?.zoom ? Number(query.zoom) : 12;
+    const cacheKey = `risk-map:${query?.city || 'all'}:${zoom}`;
+
+    const cached = await this.redisService.getJson<FloodZoneDto[]>(cacheKey);
+    if (cached) return cached;
+
+    let tolerance: number;
+    if (zoom <= 10) tolerance = 0.005;
+    else if (zoom <= 13) tolerance = 0.001;
+    else tolerance = 0;
+
+    let result: FloodZoneDto[];
+
+    if (tolerance > 0) {
+      let qb = this.zonesRepository.createQueryBuilder('zone');
+
+      if (query?.city) {
+        qb = qb.where('zone.city = :city', { city: query.city });
+      }
+
+      qb = qb
+        .select('zone.id', 'id')
+        .addSelect('zone.name', 'name')
+        .addSelect('zone.level', 'level')
+        .addSelect('zone.centerLat', 'centerLat')
+        .addSelect('zone.centerLng', 'centerLng')
+        .addSelect('zone.city', 'city')
+        .addSelect('zone.score', 'score')
+        .addSelect('zone.source', 'source')
+        .addSelect(
+          `ST_AsGeoJSON(ST_Simplify(zone.polygon, :tolerance))`,
+          'simplified_polygon',
+        )
+        .setParameter('tolerance', tolerance);
+
+      const rawZones = await qb.getRawMany();
+
+      result = rawZones
+        .filter(z => z.simplified_polygon)
+        .map(z => {
+          const geojson = JSON.parse(z.simplified_polygon);
+          const coordinates = geojson?.coordinates?.[0] || [];
+          const polygon = coordinates.map(
+            ([lng, lat]: [number, number]) => ({ lat, lng }),
+          );
+          return {
+            id: z.id,
+            name: z.name,
+            level: z.level as RiskLevel,
+            polygon,
+            center: { lat: z.centerLat, lng: z.centerLng },
+            city: z.city,
+            score: z.score,
+            source: z.source,
+          } as FloodZoneDto;
+        });
+    } else {
+      result = await this.findAll({ city: query?.city });
+    }
+
+    await this.redisService.setJson(cacheKey, 300, result);
+    return result;
   }
 
   private formatZoneResponse(zone: FloodZoneEntity): FloodZoneDto {
-    // Parse GeoJSON polygon to array of LatLng
     const coordinates = zone.polygon?.coordinates?.[0] || [];
     const polygon = coordinates.map(([lng, lat]: [number, number]) => ({ lat, lng }));
 
@@ -81,6 +155,13 @@ export class ZonesService {
       center: { lat: zone.centerLat, lng: zone.centerLng },
       city: zone.city,
       score: zone.score,
+      altitude: zone.altitude,
+      elevation: zone.elevation,
+      nature: zone.nature,
+      zoneType: zone.zoneType,
+      designation: zone.designation,
+      shapeArea: zone.shapeArea,
+      source: zone.source,
       createdAt: zone.createdAt,
     };
   }

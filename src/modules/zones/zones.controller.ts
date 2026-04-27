@@ -11,13 +11,24 @@ export class ZonesController {
   @ApiOperation({ summary: 'Get all flood zones' })
   @ApiQuery({ name: 'city', required: false })
   @ApiQuery({ name: 'level', required: false })
+  @ApiQuery({ name: 'source', required: false, description: 'Filter by data source (e.g. shapefile_zone_inondable_humide)' })
+  @ApiQuery({ name: 'nature', required: false, description: 'Filter by zone nature' })
   @ApiQuery({ name: 'lat', required: false })
   @ApiQuery({ name: 'lng', required: false })
   @ApiQuery({ name: 'radius', required: false })
   async getZones(
-    @Query() query: { city?: string; level?: string; lat?: number; lng?: number; radius?: number },
+    @Query() query: {
+      city?: string;
+      level?: string;
+      source?: string;
+      nature?: string;
+      lat?: number;
+      lng?: number;
+      radius?: number;
+    },
   ) {
-    return this.zonesService.findAll(query);
+    const zones = await this.zonesService.findAll(query);
+    return { zones };
   }
 
   @Get('nearby')
@@ -26,13 +37,17 @@ export class ZonesController {
   @ApiQuery({ name: 'lng', required: true })
   @ApiQuery({ name: 'radius', required: false })
   async getNearby(@Query() query: { lat: number; lng: number; radius?: number }) {
-    return this.zonesService.getNearby(query.lat, query.lng, query.radius);
+    const zones = await this.zonesService.getNearby(query.lat, query.lng, query.radius);
+    return { zones };
   }
 
   @Get('risk-map')
-  @ApiOperation({ summary: 'Get zones for risk map visualization' })
-  async getRiskMap(@Query() query: { city?: string }) {
-    return this.zonesService.getRiskMap(query);
+  @ApiOperation({ summary: 'Get zones for risk map visualization (mobile-optimized)' })
+  @ApiQuery({ name: 'city', required: false })
+  @ApiQuery({ name: 'zoom', required: false, description: 'Map zoom level (8-18) for polygon simplification' })
+  async getRiskMap(@Query() query: { city?: string; zoom?: number }) {
+    const zones = await this.zonesService.getRiskMapOptimized(query);
+    return { zones };
   }
 
   @Get(':id')

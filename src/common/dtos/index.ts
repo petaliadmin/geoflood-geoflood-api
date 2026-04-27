@@ -123,6 +123,13 @@ export class FloodZoneDto {
   center: LatLng;
   city: string;
   score?: number;
+  altitude?: number;
+  elevation?: number;
+  nature?: string;
+  zoneType?: string;
+  designation?: string;
+  shapeArea?: number;
+  source?: string;
   createdAt: Date;
 }
 

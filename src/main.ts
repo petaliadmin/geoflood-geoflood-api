@@ -1,6 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
-import { ValidationPipe, VersioningType } from '@nestjs/common';
+import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import helmet from 'helmet';
 import compression from 'compression';
@@ -14,12 +14,6 @@ async function bootstrap() {
   app.use(helmet());
   app.use(compression());
 
-  // Version API
-  app.enableVersioning({
-    type: VersioningType.URI,
-    defaultVersion: '1',
-  });
-
   // Global validation pipe
   app.useGlobalPipes(
     new ValidationPipe({
@@ -32,10 +26,9 @@ async function bootstrap() {
     }),
   );
 
-  // CORS
-  const corsOrigins = configService.get<string>('CORS_ORIGIN', 'http://localhost:3000').split(',');
+  // CORS — allow all origins
   app.enableCors({
-    origin: corsOrigins,
+    origin: true,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],

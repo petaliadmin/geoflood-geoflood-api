@@ -8,7 +8,13 @@
       "Bash(npx eslint *)",
       "Bash(npx jest *)",
       "Bash(npm run *)",
-      "Bash(npm install *)"
+      "Bash(npm install *)",
+      "Bash(find . -type f -exec ls -lhS {} \\\\;)",
+      "Bash(awk '{print $5, $9}')",
+      "Bash(sort -k2)",
+      "Bash(file *)",
+      "Bash(find C:\\\\Developement\\\\geoflood\\\\geoflood-backend\\\\Zone_inondable_humide *)",
+      "Bash(python3)"
     ]
   }
 }
