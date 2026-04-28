@@ -10,8 +10,20 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
 
-  // Security middleware
-  app.use(helmet());
+  // Security middleware — relax CSP so Swagger UI assets load
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: [`'self'`],
+          styleSrc: [`'self'`, `'unsafe-inline'`],
+          imgSrc: [`'self'`, 'data:', 'https:'],
+          scriptSrc: [`'self'`, `'unsafe-inline'`, `'unsafe-eval'`],
+        },
+      },
+      crossOriginEmbedderPolicy: false,
+    }),
+  );
   app.use(compression());
 
   // Global validation pipe
