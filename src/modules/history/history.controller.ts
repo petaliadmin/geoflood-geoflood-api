@@ -1,5 +1,13 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
+import {
+  Controller,
+  Get,
+  Param,
+  ParseIntPipe,
+  ParseUUIDPipe,
+  Query,
+  DefaultValuePipe,
+} from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiQuery, ApiParam } from '@nestjs/swagger';
 import { HistoryService } from './history.service';
 
 @ApiTags('History')
@@ -25,8 +33,13 @@ export class HistoryController {
   }
 
   @Get('zone/:zoneId')
-  @ApiOperation({ summary: 'Get history for a specific zone' })
-  async getZoneHistory(@Query('years') years: number = 5, @Param('zoneId') zoneId: string) {
+  @ApiOperation({ summary: 'Get flood history for a specific zone' })
+  @ApiParam({ name: 'zoneId', description: 'UUID de la zone inondable' })
+  @ApiQuery({ name: 'years', required: false, type: Number, description: 'Nombre d\'années d\'historique (1-50, défaut 5)' })
+  async getZoneHistory(
+    @Param('zoneId', new ParseUUIDPipe({ version: '4' })) zoneId: string,
+    @Query('years', new DefaultValuePipe(5), ParseIntPipe) years: number,
+  ) {
     return this.historyService.getZoneHistory(zoneId, years);
   }
 }

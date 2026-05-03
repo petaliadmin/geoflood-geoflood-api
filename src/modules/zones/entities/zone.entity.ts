@@ -97,6 +97,8 @@ export class FloodZoneEntity {
 @Index(['level'])
 @Index(['category'])
 @Index(['createdAt'])
+@Index(['status'])
+@Index(['createdBy'])
 export class AlertEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -120,6 +122,24 @@ export class AlertEntity {
 
   @Column('uuid', { nullable: true })
   targetZoneId: string;
+
+  @Column('enum', {
+    enum: ['pending', 'validated', 'rejected'],
+    default: 'pending',
+  })
+  status: 'pending' | 'validated' | 'rejected';
+
+  @Column('uuid', { nullable: true })
+  createdBy: string | null;
+
+  @Column('uuid', { nullable: true })
+  validatedBy: string | null;
+
+  @Column('timestamp', { nullable: true })
+  validatedAt: Date | null;
+
+  @Column('text', { nullable: true })
+  rejectionReason: string | null;
 
   @CreateDateColumn()
   createdAt: Date;

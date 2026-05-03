@@ -1,8 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { ZonesService } from '../zones.service';
-import { FloodZoneEntity } from '../entities/zone.entity';
+import { FloodZoneEntity, AlertEntity } from '../entities/zone.entity';
 import { RedisService } from '@/common/redis/redis.service';
+import { AdminBoundariesService } from '@/modules/admin-boundaries/admin-boundaries.service';
 
 const mockZone: Partial<FloodZoneEntity> = {
   id: 'test-uuid-001',
@@ -54,12 +56,21 @@ const mockRepository = {
   count: jest.fn(),
 };
 
+const mockAlertsRepository = {
+  createQueryBuilder: jest.fn(),
+};
+
 const mockRedisService = {
   get: jest.fn().mockResolvedValue(null),
   getJson: jest.fn().mockResolvedValue(null),
   setex: jest.fn().mockResolvedValue('OK'),
   setJson: jest.fn().mockResolvedValue('OK'),
   del: jest.fn(),
+};
+
+const mockAdminBoundariesService = {
+  resolveArea: jest.fn(),
+  pickDeepest: jest.fn(),
 };
 
 describe('ZonesService', () => {
@@ -70,7 +81,9 @@ describe('ZonesService', () => {
       providers: [
         ZonesService,
         { provide: getRepositoryToken(FloodZoneEntity), useValue: mockRepository },
+        { provide: getRepositoryToken(AlertEntity), useValue: mockAlertsRepository },
         { provide: RedisService, useValue: mockRedisService },
+        { provide: AdminBoundariesService, useValue: mockAdminBoundariesService },
       ],
     }).compile();
 
@@ -272,6 +285,129 @@ describe('ZonesService', () => {
 
       const result = await service.findAll();
       expect(result[0].polygon).toEqual([]);
+    });
+  });
+
+  describe('findByArea', () => {
+    it('throws when no area filter is provided', async () => {
+      await expect(service.findByArea({})).rejects.toThrow(BadRequestException);
+    });
+
+    it('throws when no boundary matches the requested area', async () => {
+      mockAdminBoundariesService.resolveArea.mockResolvedValue({});
+      mockAdminBoundariesService.pickDeepest.mockReturnValue(undefined);
+
+      await expect(service.findByArea({ region: 'Unknown' })).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it('returns zones intersecting the deepest matched boundary', async () => {
+      const region = { id: 'b-region', name: 'Dakar', level: 'region' };
+      const commune = { id: 'b-commune', name: 'Pikine', level: 'commune' };
+      mockAdminBoundariesService.resolveArea.mockResolvedValue({ region, commune });
+      mockAdminBoundariesService.pickDeepest.mockReturnValue(commune);
+
+      const innerJoin = jest.fn().mockReturnThis();
+      const where = jest.fn().mockReturnThis();
+      const orderBy = jest.fn().mockReturnThis();
+      const addOrderBy = jest.fn().mockReturnThis();
+      const getMany = jest.fn().mockResolvedValue([mockZone]);
+      mockRepository.createQueryBuilder.mockReturnValueOnce({
+        innerJoin,
+        where,
+        orderBy,
+        addOrderBy,
+        getMany,
+      });
+
+      const result = await service.findByArea({
+        region: 'Dakar',
+        commune: 'Pikine',
+        level: 'high',
+      });
+
+      expect(innerJoin).toHaveBeenCalledWith(
+        'administrative_boundaries',
+        'b',
+        expect.stringContaining('ST_Intersects'),
+        { boundaryId: 'b-commune' },
+      );
+      expect(where).toHaveBeenCalledWith('zone.level = :level', { level: 'high' });
+      expect(result.area).toEqual({
+        region: 'Dakar',
+        department: undefined,
+        commune: 'Pikine',
+        quartier: undefined,
+      });
+      expect(result.boundaryId).toBe('b-commune');
+      expect(result.zones).toHaveLength(1);
+      expect(result.zones[0].id).toBe('test-uuid-001');
+    });
+  });
+
+  describe('findAlerted', () => {
+    it('returns zones currently under a validated alert with alertCount', async () => {
+      const innerJoin = jest.fn().mockReturnThis();
+      const where = jest.fn().mockReturnThis();
+      const andWhere = jest.fn().mockReturnThis();
+      const select = jest.fn().mockReturnThis();
+      const addSelect = jest.fn().mockReturnThis();
+      const groupBy = jest.fn().mockReturnThis();
+      const orderBy = jest.fn().mockReturnThis();
+      const getRawAndEntities = jest.fn().mockResolvedValue({
+        entities: [mockZone],
+        raw: [{ alertCount: '3' }],
+      });
+
+      mockRepository.createQueryBuilder.mockReturnValueOnce({
+        innerJoin,
+        where,
+        andWhere,
+        select,
+        addSelect,
+        groupBy,
+        orderBy,
+        getRawAndEntities,
+      });
+
+      const result = await service.findAlerted();
+
+      expect(innerJoin).toHaveBeenCalledWith(
+        AlertEntity,
+        'alert',
+        'alert."targetZoneId" = zone.id',
+      );
+      expect(where).toHaveBeenCalledWith('alert.status = :status', {
+        status: 'validated',
+      });
+      expect(andWhere).toHaveBeenCalledWith(
+        'alert."validatedAt" >= :cutoff',
+        expect.objectContaining({ cutoff: expect.any(Date) }),
+      );
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe('test-uuid-001');
+      expect(result[0].alertCount).toBe(3);
+    });
+
+    it('honors city filter when provided', async () => {
+      const builder = {
+        innerJoin: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        select: jest.fn().mockReturnThis(),
+        addSelect: jest.fn().mockReturnThis(),
+        groupBy: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        getRawAndEntities: jest.fn().mockResolvedValue({ entities: [], raw: [] }),
+      };
+      mockRepository.createQueryBuilder.mockReturnValueOnce(builder);
+
+      await service.findAlerted({ city: 'Dakar', freshnessHours: 24 });
+
+      expect(builder.andWhere).toHaveBeenCalledWith('zone.city = :city', {
+        city: 'Dakar',
+      });
     });
   });
 });

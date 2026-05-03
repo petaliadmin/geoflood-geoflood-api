@@ -21,6 +21,8 @@ import { HealthModule } from './modules/health/health.module';
 import { HistoryModule } from './modules/history/history.module';
 import { RouteModule } from './modules/routes/route.module';
 import { PredictionsModule } from './modules/predictions/predictions.module';
+import { SyncModule } from './modules/sync/sync.module';
+import { AdminBoundariesModule } from './modules/admin-boundaries/admin-boundaries.module';
 import { RedisModule } from './common/redis/redis.module';
 
 // Common
@@ -45,6 +47,11 @@ import { AppService } from './app.service';
         FIREBASE_CLIENT_EMAIL: Joi.string(),
         WEATHER_API_KEY: Joi.string(),
         WEATHER_API_URL: Joi.string(),
+        WEATHER_PROVIDER: Joi.string().valid('openweathermap', 'local').default('local'),
+        OPENWEATHER_API_KEY: Joi.string(),
+        OSRM_BASE_URL: Joi.string().uri(),
+        FLOOD_PROBABILITY_THRESHOLD: Joi.number().min(0).max(1).default(0.7),
+        ALERT_FRESHNESS_HOURS: Joi.number().integer().min(1).default(12),
         GOOGLE_CLIENT_ID: Joi.string(),
         GOOGLE_CLIENT_SECRET: Joi.string(),
         AWS_REGION: Joi.string(),
@@ -130,6 +137,8 @@ import { AppService } from './app.service';
     HistoryModule,
     RouteModule,
     PredictionsModule,
+    SyncModule,
+    AdminBoundariesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

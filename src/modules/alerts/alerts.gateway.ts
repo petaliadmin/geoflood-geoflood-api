@@ -15,7 +15,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { AlertsService } from './alerts.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { AlertCreatedEvent } from './alerts.service';
+import { AlertValidatedEvent } from './alerts.service';
 
 interface AlertData {
   id: string;
@@ -61,8 +61,9 @@ export class AlertsGateway implements OnGatewayInit, OnGatewayConnection, OnGate
   afterInit(_server: Server) {
     this.logger.log('WebSocket alerts gateway initialized');
 
-    this.eventEmitter.on('alert.created', async (event: AlertCreatedEvent) => {
-      await this.handleAlertCreated(event);
+    // Only broadcast alerts that have been validated
+    this.eventEmitter.on('alert.validated', async (event: AlertValidatedEvent) => {
+      await this.handleAlertValidated(event);
     });
   }
 
@@ -187,7 +188,7 @@ export class AlertsGateway implements OnGatewayInit, OnGatewayConnection, OnGate
     return { success: true };
   }
 
-  private async handleAlertCreated(event: AlertCreatedEvent) {
+  private async handleAlertValidated(event: AlertValidatedEvent) {
     const alert = event.alert;
 
     if (event.targetCity) {
@@ -200,7 +201,7 @@ export class AlertsGateway implements OnGatewayInit, OnGatewayConnection, OnGate
 
     if (!event.targetCity && !event.targetZoneId) {
       this.server.emit('new-alert', { ...alert, global: true });
-      this.logger.log('Global alert broadcasted');
+      this.logger.log('Global validated alert broadcasted');
     }
   }
 

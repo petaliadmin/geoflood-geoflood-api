@@ -1,16 +1,20 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { FloodZoneEntity } from './entities/zone.entity';
+import { FloodZoneEntity, AlertEntity } from './entities/zone.entity';
 import { FloodZoneDto, RiskLevel } from '@/common/dtos';
 import { RedisService } from '@/common/redis/redis.service';
+import { AdminBoundariesService } from '@/modules/admin-boundaries/admin-boundaries.service';
 
 @Injectable()
 export class ZonesService {
   constructor(
     @InjectRepository(FloodZoneEntity)
     private zonesRepository: Repository<FloodZoneEntity>,
+    @InjectRepository(AlertEntity)
+    private alertsRepository: Repository<AlertEntity>,
     private redisService: RedisService,
+    private adminBoundariesService: AdminBoundariesService,
   ) {}
 
   async findAll(query?: {
@@ -141,6 +145,107 @@ export class ZonesService {
 
     await this.redisService.setJson(cacheKey, 300, result);
     return result;
+  }
+
+  /**
+   * Find flood zones inside a given administrative area (region/department/commune/quartier).
+   * Uses ST_Intersects against the deepest provided boundary geometry.
+   */
+  async findByArea(query: {
+    region?: string;
+    department?: string;
+    commune?: string;
+    quartier?: string;
+    level?: string;
+  }): Promise<{
+    area: { region?: string; department?: string; commune?: string; quartier?: string };
+    boundaryId?: string;
+    zones: FloodZoneDto[];
+  }> {
+    const { region, department, commune, quartier, level } = query;
+    if (!region && !department && !commune && !quartier) {
+      throw new BadRequestException(
+        'At least one of region, department, commune, quartier is required',
+      );
+    }
+
+    const resolved = await this.adminBoundariesService.resolveArea({
+      region,
+      department,
+      commune,
+      quartier,
+    });
+    const deepest = this.adminBoundariesService.pickDeepest(resolved);
+    if (!deepest) {
+      throw new NotFoundException('No matching administrative boundary found');
+    }
+
+    let qb = this.zonesRepository
+      .createQueryBuilder('zone')
+      .innerJoin(
+        'administrative_boundaries',
+        'b',
+        'b.id = :boundaryId AND ST_Intersects(zone.polygon, b.geometry)',
+        { boundaryId: deepest.id },
+      );
+
+    if (level) {
+      qb = qb.where('zone.level = :level', { level });
+    }
+
+    const zones = await qb
+      .orderBy('zone.level', 'DESC')
+      .addOrderBy('zone.createdAt', 'DESC')
+      .getMany();
+
+    return {
+      area: {
+        region: resolved.region?.name,
+        department: resolved.department?.name,
+        commune: resolved.commune?.name,
+        quartier: resolved.quartier?.name,
+      },
+      boundaryId: deepest.id,
+      zones: zones.map(z => this.formatZoneResponse(z)),
+    };
+  }
+
+  /**
+   * Find flood zones currently under an active validated alert.
+   * "Active" = alert.status='validated' AND validatedAt within freshnessHours window.
+   */
+  async findAlerted(options?: {
+    freshnessHours?: number;
+    city?: string;
+  }): Promise<Array<FloodZoneDto & { alertCount: number }>> {
+    const freshnessHours = options?.freshnessHours ?? 12;
+    const cutoff = new Date(Date.now() - freshnessHours * 3600 * 1000);
+
+    let qb = this.zonesRepository
+      .createQueryBuilder('zone')
+      .innerJoin(
+        AlertEntity,
+        'alert',
+        'alert."targetZoneId" = zone.id',
+      )
+      .where('alert.status = :status', { status: 'validated' })
+      .andWhere('alert."validatedAt" >= :cutoff', { cutoff });
+
+    if (options?.city) {
+      qb = qb.andWhere('zone.city = :city', { city: options.city });
+    }
+
+    const zones = await qb
+      .select('zone')
+      .addSelect('COUNT(alert.id)', 'alertCount')
+      .groupBy('zone.id')
+      .orderBy('"alertCount"', 'DESC')
+      .getRawAndEntities();
+
+    return zones.entities.map((z, i) => ({
+      ...this.formatZoneResponse(z),
+      alertCount: parseInt(zones.raw[i].alertCount, 10),
+    }));
   }
 
   private formatZoneResponse(zone: FloodZoneEntity): FloodZoneDto {

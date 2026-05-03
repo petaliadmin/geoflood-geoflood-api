@@ -41,6 +41,42 @@ export class ZonesController {
     return { zones };
   }
 
+  @Get('by-area')
+  @ApiOperation({
+    summary: 'Get flood zones filtered by administrative area (region/department/commune/quartier)',
+  })
+  @ApiQuery({ name: 'region', required: false })
+  @ApiQuery({ name: 'department', required: false })
+  @ApiQuery({ name: 'commune', required: false })
+  @ApiQuery({ name: 'quartier', required: false })
+  @ApiQuery({ name: 'level', required: false, description: 'Filter by zone risk level (high/medium/low)' })
+  async getByArea(
+    @Query() query: {
+      region?: string;
+      department?: string;
+      commune?: string;
+      quartier?: string;
+      level?: string;
+    },
+  ) {
+    return this.zonesService.findByArea(query);
+  }
+
+  @Get('alerted')
+  @ApiOperation({
+    summary: 'Get zones currently under an active validated alert',
+  })
+  @ApiQuery({ name: 'freshnessHours', required: false, description: 'Alert freshness window in hours (default: 12)' })
+  @ApiQuery({ name: 'city', required: false })
+  async getAlerted(@Query() query: { freshnessHours?: string; city?: string }) {
+    const freshnessHours = query.freshnessHours ? Number(query.freshnessHours) : undefined;
+    const zones = await this.zonesService.findAlerted({
+      freshnessHours,
+      city: query.city,
+    });
+    return { count: zones.length, zones };
+  }
+
   @Get('risk-map')
   @ApiOperation({ summary: 'Get zones for risk map visualization (mobile-optimized)' })
   @ApiQuery({ name: 'city', required: false })

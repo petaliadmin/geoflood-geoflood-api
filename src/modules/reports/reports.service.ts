@@ -40,7 +40,12 @@ export class ReportsService {
     return this.formatReportResponse(saved);
   }
 
-  async findReports(query?: { limit?: number; offset?: number; status?: string }) {
+  async findReports(query?: {
+    limit?: number;
+    offset?: number;
+    status?: string;
+    userId?: string;
+  }) {
     const limit = query?.limit || 10;
     const offset = query?.offset || 0;
 
@@ -48,6 +53,10 @@ export class ReportsService {
 
     if (query?.status) {
       qb = qb.where('report.status = :status', { status: query.status });
+    }
+
+    if (query?.userId) {
+      qb = qb.andWhere('report.userId = :userId', { userId: query.userId });
     }
 
     const [reports, total] = await qb

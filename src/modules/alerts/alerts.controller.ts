@@ -24,7 +24,10 @@ export class AlertsController {
 
   @Get()
   @HttpCode(200)
-  @ApiOperation({ summary: 'Get all alerts with pagination' })
+  @ApiOperation({
+    summary:
+      'Get alerts with pagination. Public sees only validated; admins can pass status=pending|all',
+  })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({ name: 'offset', required: false, type: Number })
   @ApiQuery({
@@ -33,6 +36,11 @@ export class AlertsController {
     enum: ['rain', 'flood', 'evacuation', 'roadBlocked', 'info'],
   })
   @ApiQuery({ name: 'level', required: false, enum: ['high', 'medium', 'low'] })
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    enum: ['pending', 'validated', 'rejected', 'all'],
+  })
   async getAlerts(
     @Query()
     query: {
@@ -40,18 +48,30 @@ export class AlertsController {
       offset?: number;
       category?: string;
       level?: string;
+      status?: 'pending' | 'validated' | 'rejected' | 'all';
     },
     @CurrentUser() user?: AuthUser,
   ) {
     const result = await this.alertsService.findAll({
       ...query,
       userId: user?.id,
+      viewerRole: user?.role,
     });
 
     return {
       alerts: result.alerts,
       total: result.total,
     };
+  }
+
+  @Get('pending')
+  @HttpCode(200)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
+  @ApiBearerAuth('access-token')
+  @ApiOperation({ summary: 'Get pending alerts awaiting admin validation' })
+  async getPending() {
+    return this.alertsService.findPending();
   }
 
   @Get('unread-count')
@@ -87,24 +107,48 @@ export class AlertsController {
 
   @Post()
   @HttpCode(201)
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('admin', 'authority')
+  @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('access-token')
-  @ApiOperation({ summary: 'Create alert (admin/authority only)' })
-  async createAlert(@Body() dto: CreateAlertDto, @CurrentUser() _user: AuthUser) {
-    const alert = await this.alertsService.create({
-      title: dto.title,
-      message: dto.message,
-      category: dto.category,
-      level: dto.level,
-      area: dto.area,
-      targetZoneId: dto.targetZoneId,
-    });
+  @ApiOperation({
+    summary:
+      'Create alert. Citizens create as pending; authority/admin auto-validated.',
+  })
+  async createAlert(@Body() dto: CreateAlertDto, @CurrentUser() user: AuthUser) {
+    return this.alertsService.create(
+      {
+        title: dto.title,
+        message: dto.message,
+        category: dto.category,
+        level: dto.level,
+        area: dto.area,
+        targetZoneId: dto.targetZoneId,
+      },
+      { id: user.id, role: user.role },
+    );
+  }
 
-    // Broadcast alert via WebSocket
-    // The AlertsGateway will be injected and called from an event listener
+  @Post(':id/validate')
+  @HttpCode(200)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
+  @ApiBearerAuth('access-token')
+  @ApiOperation({ summary: 'Validate a pending alert (admin only)' })
+  async validateAlert(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.alertsService.validate(id, { id: user.id, role: user.role });
+  }
 
-    return alert;
+  @Post(':id/reject')
+  @HttpCode(200)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
+  @ApiBearerAuth('access-token')
+  @ApiOperation({ summary: 'Reject a pending alert (admin only)' })
+  async rejectAlert(
+    @Param('id') id: string,
+    @Body() body: { reason?: string },
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.alertsService.reject(id, { id: user.id, role: user.role }, body?.reason);
   }
 
   @Patch(':id/read')
