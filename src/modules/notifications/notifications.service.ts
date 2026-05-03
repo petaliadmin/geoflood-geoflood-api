@@ -100,7 +100,10 @@ export class NotificationsService {
       return { attempted: 0, delivered: 0, failed: 0, skipped: true, reason: 'no_users' };
     }
     const tokens = await this.tokenRepository.find({ where: { userId: In(userIds) } });
-    return this.sendToTokens(tokens.map(t => t.fcmToken), payload);
+    return this.sendToTokens(
+      tokens.map(t => t.fcmToken),
+      payload,
+    );
   }
 
   async sendToCity(city: string, payload: PushPayload): Promise<PushResult> {
@@ -111,10 +114,16 @@ export class NotificationsService {
     if (users.length === 0) {
       return { attempted: 0, delivered: 0, failed: 0, skipped: true, reason: 'no_users_in_city' };
     }
-    return this.sendToUsers(users.map(u => u.id), payload);
+    return this.sendToUsers(
+      users.map(u => u.id),
+      payload,
+    );
   }
 
-  async sendToRole(role: 'citizen' | 'authority' | 'admin', payload: PushPayload): Promise<PushResult> {
+  async sendToRole(
+    role: 'citizen' | 'authority' | 'admin',
+    payload: PushPayload,
+  ): Promise<PushResult> {
     const users = await this.userRepository.find({
       where: { role, pushAlertsEnabled: true },
       select: ['id'],
@@ -122,15 +131,28 @@ export class NotificationsService {
     if (users.length === 0) {
       return { attempted: 0, delivered: 0, failed: 0, skipped: true, reason: 'no_users_with_role' };
     }
-    return this.sendToUsers(users.map(u => u.id), payload);
+    return this.sendToUsers(
+      users.map(u => u.id),
+      payload,
+    );
   }
 
-  async sendToZone(_zoneId: string, payload: PushPayload, fallbackCity?: string): Promise<PushResult> {
+  async sendToZone(
+    _zoneId: string,
+    payload: PushPayload,
+    fallbackCity?: string,
+  ): Promise<PushResult> {
     // Per-zone subscription is not modeled at user level today. Fallback to city.
     if (fallbackCity) {
       return this.sendToCity(fallbackCity, payload);
     }
-    return { attempted: 0, delivered: 0, failed: 0, skipped: true, reason: 'no_zone_subscription_model' };
+    return {
+      attempted: 0,
+      delivered: 0,
+      failed: 0,
+      skipped: true,
+      reason: 'no_zone_subscription_model',
+    };
   }
 
   private async sendToTokens(tokens: string[], payload: PushPayload): Promise<PushResult> {

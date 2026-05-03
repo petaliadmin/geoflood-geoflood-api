@@ -8,10 +8,7 @@ import { AlertEntity, AlertReadEntity } from '../zones/entities/zone.entity';
 import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([AlertEntity, AlertReadEntity]),
-    NotificationsModule,
-  ],
+  imports: [TypeOrmModule.forFeature([AlertEntity, AlertReadEntity]), NotificationsModule],
   providers: [AlertsService, AlertsGateway, AlertsNotificationListener],
   controllers: [AlertsController],
   exports: [AlertsService, AlertsGateway],

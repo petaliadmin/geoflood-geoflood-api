@@ -79,10 +79,7 @@ export class ZonesService {
     return this.findAll({ lat, lng, radius });
   }
 
-  async getRiskMapOptimized(query?: {
-    city?: string;
-    zoom?: number;
-  }): Promise<FloodZoneDto[]> {
+  async getRiskMapOptimized(query?: { city?: string; zoom?: number }): Promise<FloodZoneDto[]> {
     const zoom = query?.zoom ? Number(query.zoom) : 12;
     const cacheKey = `risk-map:${query?.city || 'all'}:${zoom}`;
 
@@ -112,10 +109,7 @@ export class ZonesService {
         .addSelect('zone.city', 'city')
         .addSelect('zone.score', 'score')
         .addSelect('zone.source', 'source')
-        .addSelect(
-          `ST_AsGeoJSON(ST_Simplify(zone.polygon, :tolerance))`,
-          'simplified_polygon',
-        )
+        .addSelect(`ST_AsGeoJSON(ST_Simplify(zone.polygon, :tolerance))`, 'simplified_polygon')
         .setParameter('tolerance', tolerance);
 
       const rawZones = await qb.getRawMany();
@@ -125,9 +119,7 @@ export class ZonesService {
         .map(z => {
           const geojson = JSON.parse(z.simplified_polygon);
           const coordinates = geojson?.coordinates?.[0] || [];
-          const polygon = coordinates.map(
-            ([lng, lat]: [number, number]) => ({ lat, lng }),
-          );
+          const polygon = coordinates.map(([lng, lat]: [number, number]) => ({ lat, lng }));
           return {
             id: z.id,
             name: z.name,
@@ -223,11 +215,7 @@ export class ZonesService {
 
     let qb = this.zonesRepository
       .createQueryBuilder('zone')
-      .innerJoin(
-        AlertEntity,
-        'alert',
-        'alert."targetZoneId" = zone.id',
-      )
+      .innerJoin(AlertEntity, 'alert', 'alert."targetZoneId" = zone.id')
       .where('alert.status = :status', { status: 'validated' })
       .andWhere('alert."validatedAt" >= :cutoff', { cutoff });
 

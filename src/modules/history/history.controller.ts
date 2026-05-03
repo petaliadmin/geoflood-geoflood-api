@@ -35,7 +35,12 @@ export class HistoryController {
   @Get('zone/:zoneId')
   @ApiOperation({ summary: 'Get flood history for a specific zone' })
   @ApiParam({ name: 'zoneId', description: 'UUID de la zone inondable' })
-  @ApiQuery({ name: 'years', required: false, type: Number, description: 'Nombre d\'années d\'historique (1-50, défaut 5)' })
+  @ApiQuery({
+    name: 'years',
+    required: false,
+    type: Number,
+    description: "Nombre d'années d'historique (1-50, défaut 5)",
+  })
   async getZoneHistory(
     @Param('zoneId', new ParseUUIDPipe({ version: '4' })) zoneId: string,
     @Query('years', new DefaultValuePipe(5), ParseIntPipe) years: number,

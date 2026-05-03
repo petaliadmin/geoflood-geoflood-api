@@ -11,13 +11,18 @@ export class ZonesController {
   @ApiOperation({ summary: 'Get all flood zones' })
   @ApiQuery({ name: 'city', required: false })
   @ApiQuery({ name: 'level', required: false })
-  @ApiQuery({ name: 'source', required: false, description: 'Filter by data source (e.g. shapefile_zone_inondable_humide)' })
+  @ApiQuery({
+    name: 'source',
+    required: false,
+    description: 'Filter by data source (e.g. shapefile_zone_inondable_humide)',
+  })
   @ApiQuery({ name: 'nature', required: false, description: 'Filter by zone nature' })
   @ApiQuery({ name: 'lat', required: false })
   @ApiQuery({ name: 'lng', required: false })
   @ApiQuery({ name: 'radius', required: false })
   async getZones(
-    @Query() query: {
+    @Query()
+    query: {
       city?: string;
       level?: string;
       source?: string;
@@ -49,9 +54,14 @@ export class ZonesController {
   @ApiQuery({ name: 'department', required: false })
   @ApiQuery({ name: 'commune', required: false })
   @ApiQuery({ name: 'quartier', required: false })
-  @ApiQuery({ name: 'level', required: false, description: 'Filter by zone risk level (high/medium/low)' })
+  @ApiQuery({
+    name: 'level',
+    required: false,
+    description: 'Filter by zone risk level (high/medium/low)',
+  })
   async getByArea(
-    @Query() query: {
+    @Query()
+    query: {
       region?: string;
       department?: string;
       commune?: string;
@@ -66,7 +76,11 @@ export class ZonesController {
   @ApiOperation({
     summary: 'Get zones currently under an active validated alert',
   })
-  @ApiQuery({ name: 'freshnessHours', required: false, description: 'Alert freshness window in hours (default: 12)' })
+  @ApiQuery({
+    name: 'freshnessHours',
+    required: false,
+    description: 'Alert freshness window in hours (default: 12)',
+  })
   @ApiQuery({ name: 'city', required: false })
   async getAlerted(@Query() query: { freshnessHours?: string; city?: string }) {
     const freshnessHours = query.freshnessHours ? Number(query.freshnessHours) : undefined;
@@ -80,7 +94,11 @@ export class ZonesController {
   @Get('risk-map')
   @ApiOperation({ summary: 'Get zones for risk map visualization (mobile-optimized)' })
   @ApiQuery({ name: 'city', required: false })
-  @ApiQuery({ name: 'zoom', required: false, description: 'Map zoom level (8-18) for polygon simplification' })
+  @ApiQuery({
+    name: 'zoom',
+    required: false,
+    description: 'Map zoom level (8-18) for polygon simplification',
+  })
   async getRiskMap(@Query() query: { city?: string; zoom?: number }) {
     const zones = await this.zonesService.getRiskMapOptimized(query);
     return { zones };

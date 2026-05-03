@@ -3,11 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 import { WeatherCondition } from '@/common/dtos';
-import {
-  IWeatherProvider,
-  WeatherProviderQuery,
-  WeatherSnapshotData,
-} from '../weather.provider';
+import { IWeatherProvider, WeatherProviderQuery, WeatherSnapshotData } from '../weather.provider';
 
 interface OWMCurrentResponse {
   coord: { lon: number; lat: number };

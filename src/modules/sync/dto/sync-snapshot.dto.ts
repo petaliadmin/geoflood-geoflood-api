@@ -1,10 +1,4 @@
-import {
-  AlertDto,
-  FloodReportDto,
-  FloodZoneDto,
-  PredictionDto,
-  WeatherDto,
-} from '@/common/dtos';
+import { AlertDto, FloodReportDto, FloodZoneDto, PredictionDto, WeatherDto } from '@/common/dtos';
 
 export class SyncSnapshotUserDto {
   id: string;

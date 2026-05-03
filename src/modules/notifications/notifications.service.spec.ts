@@ -1,8 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { ConfigService } from '@nestjs/config';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { ConflictException, NotFoundException } from '@nestjs/common';
 import { NotificationsService } from './notifications.service';
 import { NotificationTokenEntity } from '../zones/entities/zone.entity';
+import { UserEntity } from '../users/entities/user.entity';
 
 const mockToken: Partial<NotificationTokenEntity> = {
   id: 'token-1',
@@ -26,10 +28,21 @@ describe('NotificationsService', () => {
       remove: jest.fn().mockResolvedValue({}),
     };
 
+    const userRepository = {
+      findOne: jest.fn(),
+      find: jest.fn(),
+    };
+
+    const configService = {
+      get: jest.fn().mockReturnValue(undefined),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         NotificationsService,
         { provide: getRepositoryToken(NotificationTokenEntity), useValue: repository },
+        { provide: getRepositoryToken(UserEntity), useValue: userRepository },
+        { provide: ConfigService, useValue: configService },
       ],
     }).compile();
 

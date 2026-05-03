@@ -58,10 +58,14 @@ export class SyncService {
         'zonesService.findAll',
         [],
       ),
-      this.safe(
-        () => this.alertsService.getAlertsForUser(user.id, alertsLimit, 0),
+      this.safe<{ alerts: AlertDto[]; total: number }>(
+        () =>
+          this.alertsService.getAlertsForUser(user.id, alertsLimit, 0) as unknown as Promise<{
+            alerts: AlertDto[];
+            total: number;
+          }>,
         'alertsService.getAlertsForUser',
-        { alerts: [] as AlertDto[], total: 0 },
+        { alerts: [], total: 0 },
       ),
       this.safe<{ reports: unknown[]; total: number }>(
         () => this.reportsService.findReports({ userId: user.id, limit: reportsLimit }),
@@ -100,7 +104,7 @@ export class SyncService {
       zones,
       floodedAreas: [],
       alerts: {
-        items: alertsResult.alerts as AlertDto[],
+        items: alertsResult.alerts,
         unreadCount,
       },
       predictions,

@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger, Optional } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -7,11 +7,7 @@ import { WeatherSnapshotEntity } from '../zones/entities/zone.entity';
 import { WeatherDto, WeatherCondition } from '@/common/dtos';
 import { LocalDbWeatherProvider } from './providers/local-db.provider';
 import { OpenWeatherMapProvider } from './providers/openweathermap.provider';
-import {
-  IWeatherProvider,
-  WeatherProviderQuery,
-  WeatherSnapshotData,
-} from './weather.provider';
+import { IWeatherProvider, WeatherProviderQuery, WeatherSnapshotData } from './weather.provider';
 
 const RAINY_CONDITIONS: WeatherCondition[] = [
   WeatherCondition.RAIN,

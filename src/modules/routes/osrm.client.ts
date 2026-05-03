@@ -27,7 +27,10 @@ export class OsrmClient {
   private readonly logger = new Logger(OsrmClient.name);
   private readonly baseUrl: string;
 
-  constructor(private config: ConfigService, private http: HttpService) {
+  constructor(
+    private config: ConfigService,
+    private http: HttpService,
+  ) {
     this.baseUrl = (this.config.get<string>('OSRM_BASE_URL') || '').replace(/\/$/, '');
   }
 

@@ -49,14 +49,12 @@ export class RouteService {
     const start: [number, number] = [params.fromLng, params.fromLat];
     const end: [number, number] = [params.toLng, params.toLat];
 
-    let osrmResp = await this.osrm.route([start, end], { alternatives: 2 });
+    const osrmResp = await this.osrm.route([start, end], { alternatives: 2 });
 
     let candidates: RouteCandidate[] = [];
 
     if (osrmResp && osrmResp.routes.length > 0) {
-      candidates = await Promise.all(
-        osrmResp.routes.map(r => this.toCandidate(r, 'osrm')),
-      );
+      candidates = await Promise.all(osrmResp.routes.map(r => this.toCandidate(r, 'osrm')));
     } else {
       candidates = [await this.buildFallbackCandidate(start, end)];
     }
@@ -111,7 +109,10 @@ export class RouteService {
     };
   }
 
-  private async toCandidate(route: OsrmRoute, source: 'osrm' | 'fallback'): Promise<RouteCandidate> {
+  private async toCandidate(
+    route: OsrmRoute,
+    source: 'osrm' | 'fallback',
+  ): Promise<RouteCandidate> {
     const evaluation = await this.evaluator.evaluateRoute({
       lineStringGeoJson: route.geometry,
     });
@@ -192,8 +193,7 @@ export class RouteService {
     return evaluation.zonesAlongRoute
       .filter(z => z.classification !== 'safe' && z.classification !== 'flood_prone')
       .map(z => ({
-        level:
-          z.classification === 'confirmed_flooded' ? 'critical' : 'warning',
+        level: z.classification === 'confirmed_flooded' ? 'critical' : 'warning',
         zoneId: z.zoneId,
         zoneName: z.zoneName,
         classification: z.classification,

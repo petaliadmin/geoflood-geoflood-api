@@ -40,12 +40,7 @@ export class ReportsService {
     return this.formatReportResponse(saved);
   }
 
-  async findReports(query?: {
-    limit?: number;
-    offset?: number;
-    status?: string;
-    userId?: string;
-  }) {
+  async findReports(query?: { limit?: number; offset?: number; status?: string; userId?: string }) {
     const limit = query?.limit || 10;
     const offset = query?.offset || 0;
 

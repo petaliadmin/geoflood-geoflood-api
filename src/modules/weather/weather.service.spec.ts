@@ -1,24 +1,32 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { ConfigService } from '@nestjs/config';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { WeatherService } from './weather.service';
 import { WeatherSnapshotEntity } from '../zones/entities/zone.entity';
 import { RedisService } from '@/common/redis/redis.service';
+import { LocalDbWeatherProvider } from './providers/local-db.provider';
+import { WeatherCondition } from '@/common/dtos';
 
-const mockSnapshot: Partial<WeatherSnapshotEntity> = {
-  id: 'ws-1',
+const mockSnapshot = {
   city: 'Dakar',
   tempC: 28,
-  condition: 'cloudy',
+  condition: WeatherCondition.CLOUDY,
   rainChance: 40,
   humidity: 70,
   windKmh: 15,
-  createdAt: new Date('2024-01-01'),
+  timestamp: new Date('2024-01-01'),
 };
 
 describe('WeatherService', () => {
   let service: WeatherService;
   let repository: Record<string, jest.Mock>;
   let redisService: Record<string, jest.Mock>;
+  let localProvider: {
+    name: string;
+    isAvailable: jest.Mock;
+    getCurrent: jest.Mock;
+    getForecast: jest.Mock;
+  };
 
   beforeEach(async () => {
     repository = {
@@ -34,11 +42,24 @@ describe('WeatherService', () => {
       del: jest.fn().mockResolvedValue(1),
     };
 
+    localProvider = {
+      name: 'local-db',
+      isAvailable: jest.fn().mockReturnValue(true),
+      getCurrent: jest.fn().mockResolvedValue(null),
+      getForecast: jest.fn().mockResolvedValue([]),
+    };
+
+    const configService = {
+      get: jest.fn().mockReturnValue('local'),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         WeatherService,
         { provide: getRepositoryToken(WeatherSnapshotEntity), useValue: repository },
         { provide: RedisService, useValue: redisService },
+        { provide: ConfigService, useValue: configService },
+        { provide: LocalDbWeatherProvider, useValue: localProvider },
       ],
     }).compile();
 
@@ -52,11 +73,11 @@ describe('WeatherService', () => {
 
       const result = await service.getWeather('Dakar');
       expect(result).toEqual(cached);
-      expect(repository.findOne).not.toHaveBeenCalled();
+      expect(localProvider.getCurrent).not.toHaveBeenCalled();
     });
 
-    it('should query DB if no cache', async () => {
-      repository.findOne.mockResolvedValue(mockSnapshot);
+    it('should query provider if no cache', async () => {
+      localProvider.getCurrent.mockResolvedValue(mockSnapshot);
 
       const result = await service.getWeather('Dakar');
       expect(result.city).toBe('Dakar');
@@ -65,7 +86,7 @@ describe('WeatherService', () => {
     });
 
     it('should return mock weather if no data', async () => {
-      repository.findOne.mockResolvedValue(null);
+      localProvider.getCurrent.mockResolvedValue(null);
 
       const result = await service.getWeather('Thies');
       expect(result.city).toBe('Thies');
@@ -82,8 +103,8 @@ describe('WeatherService', () => {
       expect(result).toEqual(cached);
     });
 
-    it('should query DB if no cache', async () => {
-      repository.find.mockResolvedValue([mockSnapshot]);
+    it('should query provider if no cache', async () => {
+      localProvider.getForecast.mockResolvedValue([mockSnapshot]);
 
       const result = await service.getForecast('Dakar', 5);
       expect(result).toHaveLength(1);
@@ -103,6 +124,7 @@ describe('WeatherService', () => {
 
       expect(repository.save).toHaveBeenCalled();
       expect(redisService.del).toHaveBeenCalledTimes(2);
+      expect(result).toBeDefined();
     });
   });
 });

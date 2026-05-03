@@ -1,8 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class CreateAdministrativeBoundaries1714720100000
-  implements MigrationInterface
-{
+export class CreateAdministrativeBoundaries1714720100000 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`CREATE EXTENSION IF NOT EXISTS postgis;`);
 
@@ -43,8 +41,6 @@ export class CreateAdministrativeBoundaries1714720100000
       DROP INDEX IF EXISTS idx_admin_boundaries_level;
     `);
     await queryRunner.query(`DROP TABLE IF EXISTS administrative_boundaries;`);
-    await queryRunner.query(
-      `DROP TYPE IF EXISTS administrative_boundaries_level_enum;`,
-    );
+    await queryRunner.query(`DROP TYPE IF EXISTS administrative_boundaries_level_enum;`);
   }
 }

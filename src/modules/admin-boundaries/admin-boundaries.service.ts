@@ -28,7 +28,10 @@ export class AdminBoundariesService {
     });
   }
 
-  async findByName(level: BoundaryLevel, name: string): Promise<AdministrativeBoundaryEntity | null> {
+  async findByName(
+    level: BoundaryLevel,
+    name: string,
+  ): Promise<AdministrativeBoundaryEntity | null> {
     return this.repo
       .createQueryBuilder('b')
       .where('b.level = :level', { level })
@@ -44,13 +47,14 @@ export class AdminBoundariesService {
     return boundary;
   }
 
-  async findContaining(lat: number, lng: number, level?: BoundaryLevel): Promise<AdministrativeBoundaryEntity[]> {
+  async findContaining(
+    lat: number,
+    lng: number,
+    level?: BoundaryLevel,
+  ): Promise<AdministrativeBoundaryEntity[]> {
     let qb = this.repo
       .createQueryBuilder('b')
-      .where(
-        'ST_Contains(b.geometry, ST_SetSRID(ST_MakePoint(:lng, :lat), 4326))',
-        { lat, lng },
-      );
+      .where('ST_Contains(b.geometry, ST_SetSRID(ST_MakePoint(:lng, :lat), 4326))', { lat, lng });
 
     if (level) {
       qb = qb.andWhere('b.level = :level', { level });

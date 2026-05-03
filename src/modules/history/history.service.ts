@@ -97,7 +97,7 @@ export class HistoryService {
       return { byYear };
     } catch (err) {
       this.logger.error(`getFloodHistory failed: ${(err as Error).message}`, (err as Error).stack);
-      throw new InternalServerErrorException('Impossible de charger l\'historique des inondations');
+      throw new InternalServerErrorException("Impossible de charger l'historique des inondations");
     }
   }
 
@@ -119,7 +119,11 @@ export class HistoryService {
         qb.where('zone.city = :city', { city: query.city });
       }
 
-      const rows = await qb.getRawMany<{ zone_id: string; zone_name: string; reportCount: string }>();
+      const rows = await qb.getRawMany<{
+        zone_id: string;
+        zone_name: string;
+        reportCount: string;
+      }>();
 
       return rows.map(z => ({
         zoneId: z.zone_id,
@@ -193,7 +197,7 @@ export class HistoryService {
         `getZoneHistory(${zoneId}) failed: ${(err as Error).message}`,
         (err as Error).stack,
       );
-      throw new InternalServerErrorException('Impossible de charger l\'historique de la zone');
+      throw new InternalServerErrorException("Impossible de charger l'historique de la zone");
     }
   }
 

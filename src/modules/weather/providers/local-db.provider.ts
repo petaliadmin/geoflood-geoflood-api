@@ -3,11 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { WeatherSnapshotEntity } from '../../zones/entities/zone.entity';
 import { WeatherCondition } from '@/common/dtos';
-import {
-  IWeatherProvider,
-  WeatherProviderQuery,
-  WeatherSnapshotData,
-} from '../weather.provider';
+import { IWeatherProvider, WeatherProviderQuery, WeatherSnapshotData } from '../weather.provider';
 
 @Injectable()
 export class LocalDbWeatherProvider implements IWeatherProvider {

@@ -2,14 +2,14 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import {
-  AlertEntity,
-  FloodZoneEntity,
-  PredictionEntity,
-} from '../zones/entities/zone.entity';
+import { AlertEntity, FloodZoneEntity, PredictionEntity } from '../zones/entities/zone.entity';
 import { WeatherService } from '../weather/weather.service';
 
-export type ZoneClassification = 'confirmed_flooded' | 'flood_prone_with_rain' | 'flood_prone' | 'safe';
+export type ZoneClassification =
+  | 'confirmed_flooded'
+  | 'flood_prone_with_rain'
+  | 'flood_prone'
+  | 'safe';
 
 export interface ZoneAlongRoute {
   zoneId: string;
@@ -46,9 +46,7 @@ export class FloodRiskEvaluator {
     this.probabilityThreshold = Number(
       this.config.get<number>('FLOOD_PROBABILITY_THRESHOLD') ?? 0.7,
     );
-    this.alertFreshnessHours = Number(
-      this.config.get<number>('ALERT_FRESHNESS_HOURS') ?? 12,
-    );
+    this.alertFreshnessHours = Number(this.config.get<number>('ALERT_FRESHNESS_HOURS') ?? 12);
   }
 
   /**
@@ -76,10 +74,9 @@ export class FloodRiskEvaluator {
     // 1. Find flood zones intersected by the route geometry
     const intersectedZones = await this.zoneRepo
       .createQueryBuilder('zone')
-      .where(
-        'ST_Intersects(zone.polygon, ST_SetSRID(ST_GeomFromGeoJSON(:line), 4326))',
-        { line: lineGeoJson },
-      )
+      .where('ST_Intersects(zone.polygon, ST_SetSRID(ST_GeomFromGeoJSON(:line), 4326))', {
+        line: lineGeoJson,
+      })
       .getMany();
 
     if (intersectedZones.length === 0) {
@@ -137,7 +134,8 @@ export class FloodRiskEvaluator {
       if (isAlerted || isHighRiskPredicted) {
         const reasons: string[] = [];
         if (isAlerted) reasons.push('active validated flood alert');
-        if (isHighRiskPredicted) reasons.push(`AI flood probability >= ${this.probabilityThreshold}`);
+        if (isHighRiskPredicted)
+          reasons.push(`AI flood probability >= ${this.probabilityThreshold}`);
         result.push({
           zoneId: zone.id,
           zoneName: zone.name,

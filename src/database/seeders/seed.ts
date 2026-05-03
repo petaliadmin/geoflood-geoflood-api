@@ -17,9 +17,7 @@ async function seed() {
     `);
 
     if (!stagingExists[0].exists) {
-      console.log(
-        'Table staging_zones_inondables not found. Import the shapefile first:',
-      );
+      console.log('Table staging_zones_inondables not found. Import the shapefile first:');
       console.log(
         '  shp2pgsql -s 32628:4326 -D -W UTF-8 Zone_inondable_humide/Zone_inondable_humide.shp staging_zones_inondables | psql ...',
       );
@@ -44,11 +42,9 @@ async function seed() {
     `);
 
     if (parseInt(existing[0].count, 10) > 0) {
+      console.log(`Already ${existing[0].count} zones imported from this source. Skipping.`);
       console.log(
-        `Already ${existing[0].count} zones imported from this source. Skipping.`,
-      );
-      console.log(
-        'To re-import, first run: DELETE FROM flood_zones WHERE source = \'shapefile_zone_inondable_humide\';',
+        "To re-import, first run: DELETE FROM flood_zones WHERE source = 'shapefile_zone_inondable_humide';",
       );
       await app.close();
       return;
@@ -100,7 +96,7 @@ async function seed() {
         AND ST_IsValid(ST_Force2D(s.geom));
     `);
 
-    const imported = Array.isArray(result) ? result[1] : result.rowCount ?? 0;
+    const imported = Array.isArray(result) ? result[1] : (result.rowCount ?? 0);
     console.log(`Imported ${imported} zones into flood_zones.`);
 
     const stats = await dataSource.query(`

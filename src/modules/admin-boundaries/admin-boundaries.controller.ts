@@ -10,7 +10,11 @@ export class AdminBoundariesController {
 
   @Get()
   @ApiOperation({ summary: 'List boundaries by level (region, department, commune, quartier)' })
-  @ApiQuery({ name: 'level', required: true, enum: ['region', 'department', 'commune', 'quartier'] })
+  @ApiQuery({
+    name: 'level',
+    required: true,
+    enum: ['region', 'department', 'commune', 'quartier'],
+  })
   async list(@Query('level') level: BoundaryLevel) {
     const boundaries = await this.service.findByLevel(level);
     return {

@@ -110,8 +110,7 @@ export class AlertsController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('access-token')
   @ApiOperation({
-    summary:
-      'Create alert. Citizens create as pending; authority/admin auto-validated.',
+    summary: 'Create alert. Citizens create as pending; authority/admin auto-validated.',
   })
   async createAlert(@Body() dto: CreateAlertDto, @CurrentUser() user: AuthUser) {
     return this.alertsService.create(
