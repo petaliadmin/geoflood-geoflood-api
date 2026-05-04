@@ -52,7 +52,10 @@ export class ZonesController {
   })
   @ApiQuery({ name: 'region', required: false })
   @ApiQuery({ name: 'department', required: false })
+  @ApiQuery({ name: 'departement', required: false, description: 'Alias for department' })
   @ApiQuery({ name: 'commune', required: false })
+  @ApiQuery({ name: 'ville', required: false, description: 'Alias for commune' })
+  @ApiQuery({ name: 'city', required: false, description: 'Alias for commune' })
   @ApiQuery({ name: 'quartier', required: false })
   @ApiQuery({
     name: 'level',
@@ -64,7 +67,10 @@ export class ZonesController {
     query: {
       region?: string;
       department?: string;
+      departement?: string;
       commune?: string;
+      ville?: string;
+      city?: string;
       quartier?: string;
       level?: string;
     },

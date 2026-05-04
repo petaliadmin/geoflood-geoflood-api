@@ -146,7 +146,10 @@ export class ZonesService {
   async findByArea(query: {
     region?: string;
     department?: string;
+    departement?: string;
     commune?: string;
+    ville?: string;
+    city?: string;
     quartier?: string;
     level?: string;
   }): Promise<{
@@ -154,17 +157,17 @@ export class ZonesService {
     boundaryId?: string;
     zones: FloodZoneDto[];
   }> {
-    const { region, department, commune, quartier, level } = query;
-    if (!region && !department && !commune && !quartier) {
+    const { region, department, departement, commune, ville, city, quartier, level } = query;
+    if (!region && !department && !departement && !commune && !ville && !city && !quartier) {
       throw new BadRequestException(
-        'At least one of region, department, commune, quartier is required',
+        'At least one of region, department, commune, ville, city, or quartier is required',
       );
     }
 
     const resolved = await this.adminBoundariesService.resolveArea({
       region,
-      department,
-      commune,
+      department: department || departement,
+      commune: commune || ville || city,
       quartier,
     });
     const deepest = this.adminBoundariesService.pickDeepest(resolved);

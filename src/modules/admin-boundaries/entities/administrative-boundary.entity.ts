@@ -8,12 +8,12 @@ import {
   JoinColumn,
 } from 'typeorm';
 
-interface GeoJsonMultiPolygon {
+export interface GeoJsonMultiPolygon {
   type: 'MultiPolygon';
   coordinates: number[][][][];
 }
 
-interface GeoJsonPoint {
+export interface GeoJsonPoint {
   type: 'Point';
   coordinates: [number, number];
 }
