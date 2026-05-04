@@ -28,6 +28,31 @@ export class AdminBoundariesService {
     });
   }
 
+  async listAreas(level?: string, parentId?: string): Promise<any[]> {
+    const qb = this.repo.createQueryBuilder('b')
+      .select([
+        'b.id as id',
+        'b.level as level',
+        'b.name as name',
+        'b.parentId as "parentId"',
+        'b.code as code',
+        'ST_XMin(b.geometry) as "minLng"',
+        'ST_YMin(b.geometry) as "minLat"',
+        'ST_XMax(b.geometry) as "maxLng"',
+        'ST_YMax(b.geometry) as "maxLat"'
+      ])
+      .orderBy('b.name', 'ASC');
+
+    if (level) {
+      qb.andWhere('b.level = :level', { level });
+    }
+    if (parentId) {
+      qb.andWhere('b.parentId = :parentId', { parentId });
+    }
+
+    return qb.getRawMany();
+  }
+
   async findByName(
     level: BoundaryLevel,
     name: string,

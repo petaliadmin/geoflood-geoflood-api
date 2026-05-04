@@ -3,28 +3,26 @@ import { ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { AdminBoundariesService } from './admin-boundaries.service';
 import { BoundaryLevel } from './entities/administrative-boundary.entity';
 
-@ApiTags('Administrative Boundaries')
-@Controller('v1/admin-boundaries')
+@ApiTags('Areas')
+@Controller('v1/areas')
 export class AdminBoundariesController {
   constructor(private readonly service: AdminBoundariesService) {}
 
   @Get()
-  @ApiOperation({ summary: 'List boundaries by level (region, department, commune, quartier)' })
-  @ApiQuery({
-    name: 'level',
-    required: true,
-    enum: ['region', 'department', 'commune', 'quartier'],
-  })
-  async list(@Query('level') level: BoundaryLevel) {
-    const boundaries = await this.service.findByLevel(level);
+  @ApiOperation({ summary: 'List boundaries by level and parentId (for mobile app)' })
+  @ApiQuery({ name: 'level', required: false, description: 'region, department, commune, quartier' })
+  @ApiQuery({ name: 'parentId', required: false })
+  async list(@Query('level') level?: BoundaryLevel, @Query('parentId') parentId?: string) {
+    const areas = await this.service.listAreas(level, parentId);
     return {
       level,
-      count: boundaries.length,
-      boundaries: boundaries.map(b => ({
-        id: b.id,
-        name: b.name,
-        code: b.code,
-        parentId: b.parentId,
+      count: areas.length,
+      areas: areas.map(a => ({
+        ...a,
+        minLng: Number(a.minLng),
+        minLat: Number(a.minLat),
+        maxLng: Number(a.maxLng),
+        maxLat: Number(a.maxLat),
       })),
     };
   }
